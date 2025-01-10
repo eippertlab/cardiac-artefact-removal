@@ -1,6 +1,6 @@
 import numpy as np
 import mne
-from scipy.signal import filtfilt, detrend
+from scipy.signal import detrend
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from fit_ecgTemplate_tukey import fit_ecgTemplate_tukey

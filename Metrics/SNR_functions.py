@@ -54,14 +54,15 @@ def evoked_from_raw_nobaseline(raw, iv_epoch, iv_baseline, trigger_name, reduced
 
 # Takes an evoked response and calculates the SNR
 def calculate_SNR_evoked(evoked, cond_name, iv_baseline, reduced_window):
-    # Drop TH6 and ECG from channels from average rereferenecd channels
-    # For anterior rereference remove those channels instead
+    # Drop reference and ECG from channels from data
     if 'TH6' in evoked.ch_names:
-        evoked.drop_channels(['TH6', 'ECG'])
-    elif 'AL' in evoked.ch_names:
-        evoked.drop_channels(['AL', 'ECG'])
-    elif 'AC' in evoked.ch_names:
-        evoked.drop_channels(['AC', 'ECG'])
+        evoked.drop_channels(['TH6'])
+    if 'AL' in evoked.ch_names:
+        evoked.drop_channels(['AL'])
+    if 'AC' in evoked.ch_names:
+        evoked.drop_channels(['AC'])
+    if 'ECG' in evoked.ch_names:
+        evoked.drop_channels(['ECG'])
 
     # Want to only check channels relevant to potential being triggered
     # Tibial centred around 22ms - take 10ms on either end

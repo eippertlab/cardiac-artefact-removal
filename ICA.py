@@ -37,7 +37,7 @@ def run_ica(subject, condition, srmr_nr, sampling_rate, choose_limited):
     # find which ICs match the ECG pattern
     ecg_indices, ecg_scores = ica.find_bads_ecg(raw, ch_name='ECG')
     if choose_limited:
-        ica.exclude = ecg_indices[0:4]
+        ica.exclude = ecg_indices[0:6]
     else:
         ica.exclude = ecg_indices
 

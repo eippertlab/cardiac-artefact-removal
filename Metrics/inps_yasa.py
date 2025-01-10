@@ -69,15 +69,13 @@ if __name__ == '__main__':
     esg_bp_freq = cfg['esg_bp_freq'][0]
 
     # Loop through methods and save as required
-    which_method = {'Prep': True,
-                    'PCA': True,
-                    'PCA PCHIP': True,
-                    'PCA Tukey': True,
-                    'PCA Tukey PCHIP': True,
-                    'ICA': True,
-                    'ICA-Anterior': True,
-                    'ICA-Separate': True,
-                    'SSP': True}
+    which_method = {'Prep': False,
+                    'PCA': False,
+                    'PCA Tukey': False,
+                    'ICA': False,
+                    'ICA-Anterior': False,
+                    'ICA-Separate': False,
+                    'SSP': False}
 
     for i in np.arange(0, len(which_method)):
         method = list(which_method.keys())[i]
@@ -154,15 +152,9 @@ if __name__ == '__main__':
                         elif method == 'PCA':
                             file_path = "/data/pt_02569/tmp_data/ecg_rm_py/"
                             file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs.fif'
-                        elif method == 'PCA PCHIP':
-                            file_path = "/data/pt_02569/tmp_data/ecg_rm_py/"
-                            file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs_pchip.fif'
                         elif method == 'PCA Tukey':
                             file_path = "/data/pt_02569/tmp_data/ecg_rm_py_tukey/"
                             file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs.fif'
-                        elif method == 'PCA Tukey PCHIP':
-                            file_path = "/data/pt_02569/tmp_data/ecg_rm_py_tukey/"
-                            file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs_pchip.fif'
                         elif method == 'ICA':
                             file_path = "/data/pt_02569/tmp_data/baseline_ica_py/"
                             if choose_limited:
@@ -176,7 +168,7 @@ if __name__ == '__main__':
                             file_path = "/data/pt_02569/tmp_data/baseline_ica_py/"
                             file_name = f"separated_clean_baseline_ica_auto_{cond_name}.fif"
 
-                        input_path = file_path + subject_id
+                        input_path = file_path + subject_id + "/"
                         raw = mne.io.read_raw_fif(f"{input_path}{file_name}", preload=True)
 
                         # Compute power at the harmonics
@@ -201,8 +193,6 @@ if __name__ == '__main__':
                     fn = f"{file_path}inps_yasa_anteriorICA.h5"
                 elif method == 'ICA-Separate':
                     fn = f"{file_path}inps_yasa_separateICA.h5"
-                elif method == 'PCA PCHIP' or method == 'PCA Tukey PCHIP':
-                    fn = f"{file_path}inps_yasa_pchip.h5"
                 else:
                     fn = f"{file_path}inps_yasa.h5"
                 with h5py.File(fn, "w") as outfile:
@@ -214,9 +204,7 @@ if __name__ == '__main__':
     # Calculate INPS for each - Prepared divided by cleaned
     ##########################################################################
     input_paths = {'PCA': "/data/pt_02569/tmp_data/ecg_rm_py/",
-                   'PCA PCHIP': "/data/pt_02569/tmp_data/ecg_rm_py/",
                    'PCA Tukey': "/data/pt_02569/tmp_data/ecg_rm_py_tukey/",
-                   'PCA Tukey PCHIP': "/data/pt_02569/tmp_data/ecg_rm_py_tukey/",
                    'ICA': "/data/pt_02569/tmp_data/baseline_ica_py/",
                    'ICA-Anterior': "/data/pt_02569/tmp_data/baseline_ica_py/",
                    'ICA-Separate': "/data/pt_02569/tmp_data/baseline_ica_py/",
@@ -232,6 +220,8 @@ if __name__ == '__main__':
 
     print("\n")
     print('All Channels Improved Normalised Power Spectrum Ratio')
+    print('Warning: For ICA separated, all channels are included but only the relevant patch has been processed via ICA,'
+          'the numbers are therefore only accurate for the relevant channels computations')
     for i in np.arange(0, len(input_paths)):
         name = list(input_paths.keys())[i]
         input_path = input_paths[name]
@@ -256,8 +246,6 @@ if __name__ == '__main__':
                 fn = f"{input_path}inps_yasa_anteriorICA.h5"
             elif name == 'ICA-Separate':
                 fn = f"{input_path}inps_yasa_separateICA.h5"
-            elif name == 'PCA Tukey PCHIP' or name == 'PCA PCHIP':
-                fn = f"{input_path}inps_yasa_pchip.h5"
             else:
                 fn = f"{input_path}inps_yasa.h5"
 
@@ -312,8 +300,6 @@ if __name__ == '__main__':
                 fn = f"{input_path}inps_yasa_anteriorICA.h5"
             elif name == 'ICA-Separate':
                 fn = f"{input_path}inps_yasa_separateICA.h5"
-            elif name == 'PCA Tukey PCHIP' or name == 'PCA PCHIP':
-                fn = f"{input_path}inps_yasa_pchip.h5"
             else:
                 fn = f"{input_path}inps_yasa.h5"
             with h5py.File(fn, "r") as infile:

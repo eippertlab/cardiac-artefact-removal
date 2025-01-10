@@ -40,6 +40,11 @@ def run_ica_separatepatches(subject, condition, srmr_nr, sampling_rate):
 
     raw_patch = raw.copy().pick_channels(channels)
 
+    # Drop the channels from the patch we will process - we'll add these back later, we do this so for later processing
+    # steps, even the separated ICA has the same number of channels, but only those in the relevant patch have been
+    # ICA corrected
+    raw = raw.drop_channels(channels)
+
     ica = mne.preprocessing.ICA(n_components=len(raw_patch.ch_names) - 1, max_iter='auto',
                                 random_state=97)
     ica.fit(raw_patch)
@@ -60,9 +65,11 @@ def run_ica_separatepatches(subject, condition, srmr_nr, sampling_rate):
     # Apply the ica
     ica.apply(raw_patch)
 
+    raw.add_channels([raw_patch])  # Add back the channels I removed
+
     # Save data
     fname = 'separated_clean_baseline_ica_auto_' + cond_name + '.fif'
-    raw_patch.save(os.path.join(save_path, fname), fmt='double', overwrite=True)
+    raw.save(os.path.join(save_path, fname), fmt='double', overwrite=True)
 
     # Save ecg indices
     with open(f'{save_path}separated_ecg_indices_{cond_name}.txt', 'w') as file:

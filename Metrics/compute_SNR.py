@@ -12,9 +12,9 @@ from SNR_functions import *
 from reref_data import rereference_data
 
 if __name__ == '__main__':
-    reduced_epochs = False  # Use a smaller number of epochs to calculate the SNR
-    reduced_window = False  # Smaller window about expected peak
-    ant_ref = False  # Use the data that has been anteriorly referenced instead
+    reduced_epochs = False  # Use a smaller number of epochs to calculate the SNR, standard is False
+    reduced_window = False  # Smaller window about expected peak, standard is False
+    ant_ref = False  # Use the data that has been anteriorly referenced instead for SSP
     choose_limited = False  # Use ICA with limited components removed
 
     subjects = np.arange(1, 37)  # 1 through 36 to access subject data
@@ -29,15 +29,13 @@ if __name__ == '__main__':
     iv_baseline = cfg['iv_baseline'][0] / 1000
 
     # Loop through methods and save as required
-    which_method = {'Prep': True,
-                    'PCA': True,
-                    'PCA PCHIP': True,
-                    'PCA Tukey': True,
-                    'PCA Tukey PCHIP': True,
-                    'ICA': True,
-                    'ICA-Anterior': True,
+    which_method = {'Prep': False,
+                    'PCA': False,
+                    'PCA Tukey': False,
+                    'ICA': False,
+                    'ICA-Anterior': False,
                     'ICA-Separate': True,
-                    'SSP': True}
+                    'SSP': False}
 
     for i in np.arange(0, len(which_method)):
         method = list(which_method.keys())[i]
@@ -79,11 +77,9 @@ if __name__ == '__main__':
 
                             # Now have one snr for relevant channel in each subject + condition
                             if cond_name == 'median':
-                                # snr_med[subject - 1, n - 5] = snr
                                 snr_med[subject - 1, n - 1] = snr
                                 chan_med.append(chan)
                             elif cond_name == 'tibial':
-                                # snr_tib[subject - 1, n - 5] = snr
                                 snr_tib[subject - 1, n - 1] = snr
                                 chan_tib.append(chan)
 
@@ -145,15 +141,9 @@ if __name__ == '__main__':
                         elif method == 'PCA':
                             file_path = "/data/pt_02569/tmp_data/ecg_rm_py/"
                             file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs.fif'
-                        elif method == 'PCA PCHIP':
-                            file_path = "/data/pt_02569/tmp_data/ecg_rm_py/"
-                            file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs_pchip.fif'
                         elif method == 'PCA Tukey':
                             file_path = "/data/pt_02569/tmp_data/ecg_rm_py_tukey/"
                             file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs.fif'
-                        elif method == 'PCA Tukey PCHIP':
-                            file_path = "/data/pt_02569/tmp_data/ecg_rm_py_tukey/"
-                            file_name = f'data_clean_ecg_spinal_{cond_name}_withqrs_pchip.fif'
                         elif method == 'ICA':
                             file_path = "/data/pt_02569/tmp_data/baseline_ica_py/"
                             if choose_limited:
@@ -222,8 +212,6 @@ if __name__ == '__main__':
                     fn = f"{file_path}snr_anteriorICA.h5"
                 if method == 'ICA-Separate':
                     fn = f"{file_path}snr_separateICA.h5"
-                if method == 'PCA PCHIP' or method == 'PCA Tukey PCHIP':
-                    fn = f"{file_path}snr_pchip.h5"
                 with h5py.File(fn, "w") as outfile:
                     for keyword in dataset_keywords:
                         outfile.create_dataset(keyword, data=getattr(savesnr, keyword))
@@ -232,9 +220,7 @@ if __name__ == '__main__':
     keywords = ['snr_med', 'snr_tib']
     input_paths = {'Prep': "/data/pt_02569/tmp_data/prepared_py/",
                    'PCA': "/data/pt_02569/tmp_data/ecg_rm_py/",
-                   'PCA PCHIP': "/data/pt_02569/tmp_data/ecg_rm_py/",
                    'PCA Tukey': "/data/pt_02569/tmp_data/ecg_rm_py_tukey/",
-                   'PCA Tukey PCHIP': "/data/pt_02569/tmp_data/ecg_rm_py_tukey/",
                    'ICA': "/data/pt_02569/tmp_data/baseline_ica_py/",
                    'ICA-Anterior': "/data/pt_02569/tmp_data/baseline_ica_py/",
                    'ICA-Separate': "/data/pt_02569/tmp_data/baseline_ica_py/",
@@ -250,8 +236,6 @@ if __name__ == '__main__':
             fn = f"{input_path}snr_anteriorICA.h5"
         elif name == 'ICA-Separate':
             fn = f"{input_path}snr_separateICA.h5"
-        elif name == 'PCA Tukey PCHIP' or name == 'PCA PCHIP':
-            fn = f"{input_path}snr_pchip.h5"
         else:
             fn = f"{input_path}snr.h5"
         # All have shape (24, 1) bar SSP which is (36, 16)

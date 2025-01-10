@@ -53,10 +53,6 @@ if __name__ == '__main__':
                 for subj in subjects:
                     subject_id = f'sub-{str(subj).zfill(3)}'
 
-                    potential_path = f"/data/p_02068/SRMR1_experiment/analyzed_data/esg/{subject_id}/"
-                    fname_pot = 'potential_latency.mat'
-                    matdata = loadmat(potential_path + fname_pot)
-
                     if trigger_name == 'Median - Stimulation':
                         time_point = 13 / 1000
                         cond_name = 'median'
@@ -99,20 +95,12 @@ if __name__ == '__main__':
                         event_id_dict = {key: value for key, value in event_ids.items() if key == trigger_name}
                         epochs_interp = mne.Epochs(raw, events, event_id=event_id_dict, tmin=iv_epoch[0], tmax=iv_epoch[1],
                                          baseline=tuple(iv_baseline), preload=True)
-                        # if 'TH6' in epochs_interp.ch_names:
-                        #     epochs_interp = epochs_interp.copy().drop_channels('TH6')
-                        # if 'Fz-TH6' in epochs_interp.ch_names:
-                        #     epochs_interp = epochs_interp.copy().drop_channels('Fz-TH6')
                         if reduced_trials:
                             epochs_interp = epochs_interp[0::4]
                         evoked_list_pca_extra.append(epochs_interp.average())
 
                         # Also read in the epochs already constructed and save in normal pca evoked list
                         epochs = mne.read_epochs(data_path_epochs, preload=True).reorder_channels(esg_chans)
-                        # if 'TH6' in epochs.ch_names:
-                        #     epochs = epochs.copy().drop_channels('TH6')
-                        # if 'Fz-TH6' in epochs.ch_names:
-                        #     epochs = epochs.copy().drop_channels('Fz-TH6')
                         if reduced_trials:
                             epochs = epochs[0::4]
                         if subj == 34:
@@ -130,10 +118,6 @@ if __name__ == '__main__':
                     else:
                         # For all others, read in the epochs we have constructed
                         epochs = mne.read_epochs(data_path, preload=True).reorder_channels(esg_chans)
-                        # if 'TH6' in epochs.ch_names:
-                        #     epochs = epochs.copy().drop_channels('TH6')
-                        # if 'Fz-TH6' in epochs.ch_names:
-                        #     epochs = epochs.copy().drop_channels('Fz-TH6')
                         # Want each channel averaged across all epochs at a given time point
                         if reduced_trials:
                             epochs = epochs[0::4]

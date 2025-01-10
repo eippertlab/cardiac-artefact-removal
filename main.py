@@ -26,12 +26,12 @@ if __name__ == '__main__':
     pchip_interpolation = False  # If true import with pchip, otherwise use linear interpolation (False is standard in this project)
 
     ######## PCA-OBS #########
-    heart_removal = True
+    heart_removal = False
     pchip = False  # Whether to use pchip prepared data or not (False is standard in this project)
-    heart_removal_tukey = True  # Fitted artefact multiplied by tukey window
+    heart_removal_tukey = False  # Fitted artefact multiplied by tukey window
 
     ######### ICA ########
-    ica = False
+    ica = True
     ica_anterior = False  # Run ICA on anteriorly rereferenced data
     ica_separate_patches = False  # Run ICA on lumbar and cervical patches separately
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     ##############################################################################################################
     # choose_limited better false - SNR is worse if it's true, over 95% residual intensity and inps under 1.4
     if ica:
-        for choose_limited in [True, False]: # If true only take the top 4 ICA components from find_bads_ecg
+        for choose_limited in [True, False]: # If true only take the top 6 ICA components from find_bads_ecg
             for subject in subjects:
                 for condition in conditions:
                     run_ica(subject, condition, srmr_nr, sampling_rate, choose_limited)
