@@ -10,12 +10,13 @@ from meet import spatfilt
 from scipy.io import loadmat
 from get_conditioninfo import get_conditioninfo
 from replace_data import replace_data
-from Archive.Plotting_Code.IsopotentialFunctions import mrmr_esg_isopotentialplot
+from meegkit.dss import dss1
+from meegkit.utils.matrix import fold, unfold
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 
-def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
+def run_DSS_heart(subject, condition, srmr_nr, no_exclude_comps):
     # Want 200ms before R-peak and 400ms after R-peak
     # Baseline is the 100ms period before the artefact occurs
     iv_baseline = [-300 / 1000, -200 / 1000]
@@ -34,8 +35,8 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
 
     input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
     fname = f'noStimart_sr1000_{cond_name}_withqrs.fif'
-    save_path = "/data/pt_02569/tmp_data/cca_heartart_py/" + subject_id + "/"
-    fname_save = f'{cond_name}_heart_cca_{no_exclude_comps}removed.fif'
+    save_path = "/data/pt_02569/tmp_data/dss_heartart_py/" + subject_id + "/"
+    fname_save = f'{cond_name}_heart_dss_{no_exclude_comps}removed.fif'
     os.makedirs(save_path, exist_ok=True)
 
     esg_chans = ['S35', 'S24', 'S36', 'Iz', 'S17', 'S15', 'S32', 'S22',
@@ -52,7 +53,7 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
         pot_time = 0.022
 
     raw = mne.io.read_raw_fif(input_path + fname, preload=True)
-    raw_data = raw.get_data(picks=esg_chans)
+    raw_data = raw.get_data(picks=esg_chans)  # n_chans, n_times
 
     # now create epochs based on the heart triggers
     events, event_ids = mne.events_from_annotations(raw)
@@ -60,43 +61,25 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
     epochs = mne.Epochs(raw, events, event_id=event_id_dict, tmin=iv_epoch[0], tmax=iv_epoch[1]-1/1000,
                         baseline=tuple(iv_baseline), preload=True)
 
-    # Prepare matrices for cca
-    ##### Average matrix
-    epo_av = epochs.copy().average().data.T
-    # Now want channels x observations matrix #np.shape()[0] gets number of trials
-    # Epo av is no_times x no_channels (_x39)
-    # Want to repeat this to form an array thats no. observations x no.channels
-    # Need to repeat the array, no_trials/times amount along the y axis
-    avg_matrix = np.tile(epo_av, (int((np.shape(epochs.get_data())[0])), 1))
-    avg_matrix = avg_matrix.T  # Need to transpose for correct form for function - channels x observations
-
     ##### Single trial matrix
-    epo_cca_data = epochs.get_data(picks=esg_chans)
-    epo_data = epochs.get_data(picks=esg_chans)
+    epo_data = np.swapaxes(epochs.get_data(picks=esg_chans), 0, 2)  # n_trials, n_chans, n_times
+    # DSS needs n_samples, n_chans, n_trials so we swap axes
 
-    # 0 to access number of epochs, 1 to access number of channels
-    # channels x observations
-    # Need to transpose to get it in the form CCA wants
-    st_matrix = np.swapaxes(epo_cca_data, 1, 2).reshape(-1, epo_cca_data.shape[1]).T
-    st_matrix_long = np.swapaxes(epo_data, 1, 2).reshape(-1, epo_data.shape[1]).T
-
-    # Run CCA
+    # Run DSS
     # Some correlate ESG channel data with ECG trace in raw data - this would give us just 1 component (we have one ECG
     # trace), instead, try to do it similarly to SEP maximisation approach
-    W_avg, W_st, r = spatfilt.CCA_data(avg_matrix, st_matrix)
-    print(r)
+    # Running with default values
+    todss, fromdss, pwr_raw, pwr_avg = dss1(epo_data)
+    print(pwr_raw)
+    print(pwr_avg)
 
-    # Apply obtained weights to raw dataset (W dimensions n_channels x n_components) - matrix multiplication
-    CCA_data = raw_data.T @ W_st[:, no_exclude_comps:]  # n_times, n_components
-    CCA_data = CCA_data.T  # n_components, n_times
+    # Apply obtained weights to raw dataset (todss dimensions n_comp x n_chans) - matrix multiplication
+    # raw_data: n_chans x n_times, todss: n_components, n_chans
+    DSS_data = np.tensordot(raw_data, todss[no_exclude_comps:, :], axes=(0, 1))
 
-    # Spatial Patterns
-    A_st = np.cov(st_matrix) @ W_st
-
-    # Reconstruct data without the first x components (highest correlations)
-    for_recon = A_st[:, no_exclude_comps:]
-    # CCA_data: n_components x n_times, for_recon: n_channels, n_components
-    reconstructed_data = np.tensordot(CCA_data, for_recon, axes=(0, 1))  # n_times, n_channels
+    # Reconstruct data without the first x components (highest power)
+    # DSS_data: n_times x n_components, fromdss: n_components, n_channels
+    reconstructed_data = np.tensordot(DSS_data, fromdss[no_exclude_comps:, :], axes=(1, 0))  # n_times, n_channels
 
     #######################  Replace data in the original raw so we keep annotations etc ####################
     replace_kwargs = dict(
@@ -132,11 +115,11 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
     fig, axes = plt.subplots(2, 2)
     axes = axes.flatten()
     axes[0].plot(epochs_before.times, epochs_before.average().get_data().T*10**6)
-    axes[0].set_title('Heartbeat, Before CCA')
+    axes[0].set_title('Heartbeat, Before DSS')
     axes[1].plot(epochs_after.times, epochs_after.average().get_data().T*10**6)
     axes[1].set_title(f'Heartbeat, {no_exclude_comps} components')
     axes[2].plot(epochs_before_sep.times, epochs_before_sep.average(picks=best_chs).get_data().T*10**6)
-    axes[2].set_title('SEP, Before CCA')
+    axes[2].set_title('SEP, Before DSS')
     axes[2].set_xlim([-0.1, 0.3])
     axes[2].axvline(pot_time, color='red', linewidth=0.5)
     axes[3].plot(epochs_after_sep.times, epochs_after_sep.average(picks=best_chs).get_data().T*10**6)
@@ -148,7 +131,6 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
         axis.set_xlabel('Time (s)')
     plt.tight_layout()
     plt.show()
-    exit()
 
 if __name__ == '__main__':
-    run_CCA_heart(2, 3, 1, no_exclude_comps=5)
+    run_DSS_heart(1, 3, 1, no_exclude_comps=2)
