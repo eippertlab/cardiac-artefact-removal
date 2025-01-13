@@ -34,7 +34,7 @@ if __name__ == '__main__':
                     'PCA Tukey': False,
                     'ICA': False,
                     'ICA-Anterior': False,
-                    'ICA-Separate': True,
+                    'ICA-Separate': False,
                     'SSP': False}
 
     for i in np.arange(0, len(which_method)):

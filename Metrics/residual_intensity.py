@@ -11,7 +11,7 @@ import h5py
 from SNR_functions import evoked_from_raw
 
 if __name__ == '__main__':
-    choose_limited = False  # If true, use data where only top 4 components chosen - use FALSE, see main
+    choose_limited = False  # If true, use data where only top 6 components chosen - use FALSE, see main
     reduced_epochs = False  # Dummy variable - always false in this script as I don't reduce epochs
 
     # Define the channel names so they come out of each dataset the same

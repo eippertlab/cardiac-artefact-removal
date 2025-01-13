@@ -48,7 +48,7 @@ def get_power(data1, freq1, sampling_rate1, esg_channels):
 
 
 if __name__ == '__main__':
-    choose_limited = False  # If true use ICA data with top 4 components chosen
+    choose_limited = False  # If true use ICA data with top 6 components chosen
     reduced_epochs = False  # Always false in this script as I don't reduce epochs
 
     # Define the channel names so they come out of each dataset the same
