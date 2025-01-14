@@ -34,9 +34,11 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
 
     input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
     fname = f'noStimart_sr1000_{cond_name}_withqrs.fif'
+    image_path = "/data/p_02569/Images/CCA_HeartArtComp/" + subject_id + "/"
     save_path = "/data/pt_02569/tmp_data/cca_heartart_py/" + subject_id + "/"
     fname_save = f'{cond_name}_heart_cca_{no_exclude_comps}removed.fif'
     os.makedirs(save_path, exist_ok=True)
+    os.makedirs(image_path, exist_ok=True)
 
     esg_chans = ['S35', 'S24', 'S36', 'Iz', 'S17', 'S15', 'S32', 'S22',
                  'S19', 'S26', 'S28', 'S9', 'S13', 'S11', 'S7', 'SC1', 'S4', 'S18',
@@ -84,7 +86,6 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
     # Some correlate ESG channel data with ECG trace in raw data - this would give us just 1 component (we have one ECG
     # trace), instead, try to do it similarly to SEP maximisation approach
     W_avg, W_st, r = spatfilt.CCA_data(avg_matrix, st_matrix)
-    print(r)
 
     # Apply obtained weights to raw dataset (W dimensions n_channels x n_components) - matrix multiplication
     CCA_data = raw_data.T @ W_st[:, no_exclude_comps:]  # n_times, n_components
@@ -147,8 +148,9 @@ def run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps):
         axis.set_ylabel(u"Amplitude (\u03bcV)")
         axis.set_xlabel('Time (s)')
     plt.tight_layout()
-    plt.show()
-    exit()
+    plt.savefig(image_path+f"{cond_name}_{no_exclude_comps}removed.png")
+    plt.close()
+    # plt.show()
 
 if __name__ == '__main__':
-    run_CCA_heart(2, 3, 1, no_exclude_comps=5)
+    run_CCA_heart(1, 2, 1, no_exclude_comps=6)

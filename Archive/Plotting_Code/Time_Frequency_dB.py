@@ -45,9 +45,9 @@ if __name__ == '__main__':
     image_path = "/data/p_02569/Images/TimeFrequencyPlots_Dataset1/"
     os.makedirs(image_path, exist_ok=True)
 
-    methods = [True, True, True]
+    methods = [True, True, False]
     method_names = ['Prep', 'PCA', 'ICA']  # Will treat SSP separately since there are multiple
-    ssp = True  # Using files from merging mixed nerve with digits
+    ssp = False  # Using files from merging mixed nerve with digits
 
     # To use mne grand_average method, need to generate a list of evoked potentials for each subject
     for i in np.arange(0, len(methods)):  # Methods Applied
@@ -77,8 +77,9 @@ if __name__ == '__main__':
                     subject_id = f'sub-{str(subject).zfill(3)}'
 
                     if method == 'Prep':
-                        input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id
-                        raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr{sampling_rate}_{cond_name}_withqrs.fif", preload=True)
+                        input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
+                        fname = f"noStimart_sr{sampling_rate}_{cond_name}_withqrs.fif"
+                        raw = mne.io.read_raw_fif(input_path + fname, preload=True)
                         evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
                         evoked.reorder_channels(esg_chans)
                         evoked = evoked.pick_channels(channel)
@@ -87,9 +88,9 @@ if __name__ == '__main__':
                         evoked_list.append(power)
 
                     elif method == 'PCA':
-                        input_path = "/data/pt_02569/tmp_data/ecg_rm_py/" + subject_id
-                        fname = f"data_clean_ecg_spinal_{cond_name}_withqrs.fif"
-                        raw = mne.io.read_raw_fif(input_path + fname, preload=True)
+                        input_path = "/data/pt_02569/tmp_data/ecg_rm_py/" + subject_id + "/"
+                        evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
+
                         if spinal:
                             events, event_dict = mne.events_from_annotations(raw)
                             tstart_esg = -0.007
@@ -105,7 +106,7 @@ if __name__ == '__main__':
                         evoked_list.append(power)
 
                     elif method == 'ICA':
-                        input_path = "/data/pt_02569/tmp_data/baseline_ica_py/" + subject_id
+                        input_path = "/data/pt_02569/tmp_data/baseline_ica_py/" + subject_id + "/"
                         fname = f"clean_baseline_ica_auto_{cond_name}.fif"
                         raw = mne.io.read_raw_fif(input_path + fname, preload=True)
                         evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
@@ -125,22 +126,14 @@ if __name__ == '__main__':
                     vmax = -250
                 else:
                     tmin = -0.2
-                    tmax = 0.2
-                    if method == 'Prep':
-                        vmin = -400
-                        vmax = -175
-                    else:
-                        if cond_name == 'tibial':
-                            vmin = -400
-                            vmax = -225
-                        else:
-                            vmin = -400
-                            vmax = -250
+                    tmax = 0.4
+                    vmin = -400
+                    vmax = -260
                 fig, ax = plt.subplots(1, 1)
                 # power = mne.time_frequency.tfr_stockwell(relevant_channel, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
                 averaged.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
                               axes=ax, show=False, colorbar=True, dB=True,
-                              tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
+                              tmin=tmin, tmax=tmax, vmax=vmax, vmin=vmin)
                 im = ax.images
                 cb = im[-1].colorbar
                 cb.set_label('Amplitude [dB]')
@@ -200,13 +193,9 @@ if __name__ == '__main__':
                     vmax = -250
                 else:
                     tmin = -0.2
-                    tmax = 0.2
-                    if cond_name == 'tibial':
-                        vmin = -400
-                        vmax = -225
-                    else:
-                        vmin = -400
-                        vmax = -250
+                    tmax = 0.4
+                    vmin = -400
+                    vmax = -260
                 fig, ax = plt.subplots(1, 1)
                 # power = mne.time_frequency.tfr_stockwell(relevant_channel, fmin=fmin, fmax=fmax, width=1.1)
                 averaged.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',

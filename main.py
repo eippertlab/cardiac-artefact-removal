@@ -11,6 +11,8 @@ from import_data import import_data
 from ICA import run_ica
 from ICA_anterior import run_ica_anterior
 from ICA_separated import run_ica_separatepatches
+from run_CCA_cardiacartefact import run_CCA_heart
+from run_DSS_cardiacartefact import run_DSS_heart
 from run_CCA import run_CCA
 
 if __name__ == '__main__':
@@ -31,12 +33,18 @@ if __name__ == '__main__':
     heart_removal_tukey = False  # Fitted artefact multiplied by tukey window
 
     ######### ICA ########
-    ica = True
+    ica = False
     ica_anterior = False  # Run ICA on anteriorly rereferenced data
     ica_separate_patches = False  # Run ICA on lumbar and cervical patches separately
 
     ######### SSP ########
     SSP_flag = False
+
+    ######## CCA for cardiac artefact ########
+    CCA_heart_flag = True
+
+    ######## DSS for cardiac artefact ########
+    DSS_heart_flag = True
 
     ######## CCA for signal enhancement ########
     CCA_flag = False
@@ -98,6 +106,24 @@ if __name__ == '__main__':
         for subject in subjects:
             for condition in conditions:
                 apply_SSP(subject, condition, srmr_nr, sampling_rate)
+
+    ##############################################################################################################
+    # Run CCA on the data for cardiac artefact removal
+    ##############################################################################################################
+    if CCA_heart_flag:
+            for subject in subjects:
+                for condition in conditions:
+                    for no_exclude_comps in np.arange(1, 21):
+                        run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps)
+
+    ##############################################################################################################
+    # Run CCA on the data for cardiac artefact removal
+    ##############################################################################################################
+    if DSS_heart_flag:
+        for subject in subjects:
+            for condition in conditions:
+                for no_exclude_comps in np.arange(1, 21):
+                    run_DSS_heart(subject, condition, srmr_nr, no_exclude_comps)
 
     ##############################################################################################################
     # Run CCA on the data for signal enhancement

@@ -3,6 +3,7 @@
 import mne
 import os
 import numpy as np
+from Metrics.SNR_functions import evoked_from_raw
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 from mpl_axes_aligner import align
@@ -18,14 +19,8 @@ if __name__ == '__main__':
     fmin, fmax = freqs[[0, -1]]
     cond_names = ['median', 'tibial']
     sampling_rate = 1000
-
-    cfg_path = "/data/pt_02569/"  # Contains important info about experiment
-    cfg = loadmat(cfg_path + 'cfg.mat')
-    notch_freq = cfg['notch_freq'][0]
-    esg_bp_freq = cfg['esg_bp_freq'][0]
-
-    iv_epoch = [-400/1000, 400/1000]
-    iv_baseline = [-400/1000, -300/1000]
+    iv_baseline = [-300 / 1000, -200 / 1000]
+    iv_epoch = [-300 / 1000, 450 / 1000]
 
     esg_chans = ['S35', 'S24', 'S36', 'Iz', 'S17', 'S15', 'S32', 'S22',
                  'S19', 'S26', 'S28', 'S9', 'S13', 'S11', 'S7', 'SC1', 'S4', 'S18',
@@ -58,7 +53,10 @@ if __name__ == '__main__':
             epochs = mne.read_epochs(input_path+fname, preload=True)
             evoked = epochs.average()
             evoked.reorder_channels(esg_chans)
-            evoked = evoked.pick_channels(channel)
+            evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
+            # fname = f"noStimart_sr{sampling_rate}_{cond_name}_withqrs.fif"
+            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
+            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
             evoked_list_prep.append(power)
 
@@ -66,8 +64,11 @@ if __name__ == '__main__':
             fname = f"epochs_{cond_name}_qrs.fif"
             epochs = mne.read_epochs(input_path + fname, preload=True)
             evoked = epochs.average()
+            # fname = f"data_clean_ecg_spinal_{cond_name}_withqrs.fif"
+            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
+            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             evoked.reorder_channels(esg_chans)
-            evoked = evoked.pick_channels(channel)
+            evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
             evoked_list_pca.append(power)
 
@@ -75,8 +76,11 @@ if __name__ == '__main__':
             fname = f"epochs_{cond_name}_qrs.fif"
             epochs = mne.read_epochs(input_path + fname, preload=True)
             evoked = epochs.average()
+            # fname = f"clean_baseline_ica_auto_{cond_name}.fif"
+            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
+            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             evoked.reorder_channels(esg_chans)
-            evoked = evoked.pick_channels(channel)
+            evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
             evoked_list_ica.append(power)
 
@@ -84,8 +88,11 @@ if __name__ == '__main__':
             fname = f"epochs_{cond_name}_qrs.fif"
             epochs = mne.read_epochs(input_path + fname, preload=True)
             evoked = epochs.average()
+            # fname = f"ssp_cleaned_{cond_name}.fif"
+            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
+            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             evoked.reorder_channels(esg_chans)
-            evoked = evoked.pick_channels(channel)
+            evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
             evoked_list_ssp6.append(power)
 
