@@ -17,7 +17,9 @@ if __name__ == '__main__':
                  'S23']
     methods_nonssp = ['Prepared', 'PCA', 'ICA']
     methods_ssp = [f'SSP{n}' for n in np.arange(1, 21)]
-    methods = methods_nonssp + methods_ssp
+    methods_cca_heart = [f'CCA_heart{n}' for n in np.arange(1, 21)]
+    methods_dss_heart = [f'DSS_heart{n}' for n in np.arange(1, 21)]
+    methods = methods_nonssp + methods_ssp + methods_cca_heart + methods_dss_heart
 
     #######################################################################
     # SNR
@@ -30,7 +32,10 @@ if __name__ == '__main__':
     input_paths = {'Prepared': "/data/pt_02569/tmp_data/prepared_py/",
                    'PCA': "/data/pt_02569/tmp_data/ecg_rm_py/",
                    'ICA': "/data/pt_02569/tmp_data/baseline_ica_py/",
-                   'SSP': "/data/pt_02569/tmp_data/ssp_py/"}
+                   'SSP': "/data/pt_02569/tmp_data/ssp_py/",
+                   'CCA_heart': "/data/pt_02569/tmp_data/cca_heartart_py/",
+                   'DSS_heart': "/data/pt_02569/tmp_data/dss_heartart_py/"
+                   }
 
     print("\n")
     for i in np.arange(0, len(input_paths)):
@@ -48,7 +53,7 @@ if __name__ == '__main__':
         sem_med = sem(snr_med, axis=0, nan_policy='omit')
         sem_tib = sem(snr_tib, axis=0, nan_policy='omit')
 
-        if name == 'SSP':
+        if name in ['SSP', 'CCA_heart', 'DSS_heart']:
             for n in np.arange(0, 20):
                 df_snr.at[f'{name}{n+1}', 'Median SNR, mean'] = average_med[n]
                 df_snr.at[f'{name}{n+1}', 'Median SNR, sem'] = sem_med[n]
@@ -65,10 +70,15 @@ if __name__ == '__main__':
     #############################################################
     input_paths = {'PCA': "/data/pt_02569/tmp_data/ecg_rm_py/",
                    'ICA': "/data/pt_02569/tmp_data/baseline_ica_py/",
-                   'SSP': "/data/pt_02569/tmp_data/ssp_py/"}
+                   'SSP': "/data/pt_02569/tmp_data/ssp_py/",
+                   'CCA_heart': "/data/pt_02569/tmp_data/cca_heartart_py/",
+                   'DSS_heart': "/data/pt_02569/tmp_data/dss_heartart_py/"
+                   }
     methods_nonssp = ['PCA', 'ICA']
     methods_ssp = [f'SSP{n}' for n in np.arange(1, 21)]
-    methods = methods_nonssp + methods_ssp
+    methods_cca_heart = [f'CCA_heart{n}' for n in np.arange(1, 21)]
+    methods_dss_heart = [f'DSS_heart{n}' for n in np.arange(1, 21)]
+    methods = methods_nonssp + methods_ssp + methods_cca_heart + methods_dss_heart
     df_inpsr = pd.DataFrame(columns=['Method', 'INPS Median, mean','INPS Median, sem', 'INPS Tibial, mean', 'INPS Tibial, sem'])
     df_inpsr['Method'] = methods
     df_inpsr.set_index('Method', inplace=True)
@@ -93,9 +103,9 @@ if __name__ == '__main__':
         name = list(input_paths.keys())[i]
         input_path = input_paths[name]
 
-        if name == 'SSP':
+        if name in ['SSP', 'CCA_heart', 'DSS_heart']:
             for n in np.arange(1, 21):  # 5, 21
-                fn = f"/data/pt_02569/tmp_data/ssp_py/inps_yasa_{n}.h5"
+                fn = f"{input_path}inps_yasa_{n}.h5"
                 with h5py.File(fn, "r") as infile:
                     # Get the data
                     pow_med = infile[keywords[0]][()]
@@ -156,10 +166,9 @@ if __name__ == '__main__':
         name = list(input_paths.keys())[i]
         input_path = input_paths[name]
 
-        if name == 'SSP':
-            # SSP
+        if name in ['SSP', 'CCA_heart', 'DSS_heart']:
             for n in np.arange(1, 21):  # 5, 21
-                fn = f"/data/pt_02569/tmp_data/ssp_py/res_{n}.h5"
+                fn = f"{input_path}res_{n}.h5"
                 with h5py.File(fn, "r") as infile:
                     # Get the data
                     res_med = infile[keywords[0]][()]

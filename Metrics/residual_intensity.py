@@ -9,6 +9,10 @@ import numpy as np
 import mne
 import h5py
 from SNR_functions import evoked_from_raw
+import pickle
+from replace_data import replace_data
+from remove_components_CCA import remove_comps_CCA
+from remove_components_DSS import remove_comps_DSS
 
 if __name__ == '__main__':
     choose_limited = False  # If true, use data where only top 6 components chosen - use FALSE, see main
@@ -43,7 +47,10 @@ if __name__ == '__main__':
                     'ICA': False,
                     'ICA-Anterior': False,
                     'ICA-Separate': False,
-                    'SSP': False}
+                    'SSP': False,
+                    'CCA_heart': False,
+                    'DSS_heart': False
+                    }
 
     for i in np.arange(0, len(which_method)):
         method = list(which_method.keys())[i]
@@ -107,6 +114,143 @@ if __name__ == '__main__':
                     with h5py.File(fn, "w") as outfile:
                         for keyword in dataset_keywords:
                             outfile.create_dataset(keyword, data=getattr(saveres, keyword))
+
+            elif method == 'CCA_heart':
+                for n in np.arange(1, 21):  # 5, 7 most used
+                    # Instantiate class
+                    saveres = save_res()
+
+                    # Matrix of dimensions no.subjects x no. channels
+                    globals()[f"res_med_CCA_{n}"] = np.zeros((len(subjects), 39))
+                    globals()[f"res_tib_CCA_{n}"] = np.zeros((len(subjects), 39))
+
+                    for subject in subjects:
+                        for cond_name in cond_names:
+                            if cond_name == 'tibial':
+                                trigger_name = 'qrs'
+                                nerve = 2
+                            elif cond_name == 'median':
+                                trigger_name = 'qrs'
+                                nerve = 1
+
+                            subject_id = f'sub-{str(subject).zfill(3)}'
+
+                            # Load prepared_data
+                            input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
+                            raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr1000_{cond_name}_withqrs.fif",
+                                                      preload=True)
+                            raw_data = raw.get_data(picks=esg_chans)
+                            input_path_CCA = f"/data/pt_02569/tmp_data/cca_heartart_py/{subject_id}/"
+
+                            # Load weights and spatial patterns
+                            with open(f'{input_path_CCA}{cond_name}_heart_cca_Ast.pkl', 'rb') as f:
+                                A_st = pickle.load(f)
+                            with open(f'{input_path_CCA}{cond_name}_heart_cca_Wst.pkl', 'rb') as f:
+                                W_st = pickle.load(f)
+                            reconstructed_data = remove_comps_CCA(raw_data, n, W_st, A_st)
+                            replace_kwargs = dict(
+                                new_data=reconstructed_data.T  # n_channels, n_times
+                            )
+                            # Replace and save
+                            clean_raw = raw.copy().apply_function(replace_data, picks=esg_chans, channel_wise=False,
+                                                                  **replace_kwargs)
+                            evoked = evoked_from_raw(clean_raw, iv_epoch, iv_baseline, trigger_name, reduced_epochs)
+
+                            # Now we have an evoked potential about the heartbeat
+                            # Want to compute the RMS for each channel
+                            res_chan_CCA = []
+                            for ch in esg_chans:
+                                # Pick a single channel
+                                evoked_ch = evoked.copy().pick_channels([ch], ordered=False)
+                                data = evoked_ch.data[0, 0:]  # Format n_channels x n_times
+                                rms = np.sqrt(np.mean(data ** 2))
+                                res_chan_CCA.append(rms)
+
+                            # Now have rms for each subject, for each channel and condition
+                            if cond_name == 'median':
+                                globals()[f"res_med_CCA_{n}"][subject - 1, :] = res_chan_CCA
+                            elif cond_name == 'tibial':
+                                globals()[f"res_tib_CCA_{n}"][subject - 1, :] = res_chan_CCA
+
+                    # Save to file
+                    saveres.res_med = globals()[f"res_med_CCA_{n}"]
+                    saveres.res_tib = globals()[f"res_tib_CCA_{n}"]
+                    dataset_keywords = [a for a in dir(saveres) if not a.startswith('__')]
+
+                    fn = f"/data/pt_02569/tmp_data/cca_heartart_py/res_{n}.h5"
+
+                    with h5py.File(fn, "w") as outfile:
+                        for keyword in dataset_keywords:
+                            outfile.create_dataset(keyword, data=getattr(saveres, keyword))
+
+            elif method == 'DSS_heart':
+                for n in np.arange(1, 21):  # 5, 7 most used
+                    # Instantiate class
+                    saveres = save_res()
+
+                    # Matrix of dimensions no.subjects x no. channels
+                    globals()[f"res_med_DSS_{n}"] = np.zeros((len(subjects), 39))
+                    globals()[f"res_tib_DSS_{n}"] = np.zeros((len(subjects), 39))
+
+                    for subject in subjects:
+                        for cond_name in cond_names:
+                            if cond_name == 'tibial':
+                                trigger_name = 'qrs'
+                                nerve = 2
+                            elif cond_name == 'median':
+                                trigger_name = 'qrs'
+                                nerve = 1
+
+                            subject_id = f'sub-{str(subject).zfill(3)}'
+
+                            # Load prepared_data
+                            input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
+                            raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr1000_{cond_name}_withqrs.fif",
+                                                      preload=True)
+                            raw_data = raw.get_data(picks=esg_chans)
+                            input_path_DSS = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
+
+                            # Load weights and spatial patterns
+                            with open(f'{input_path_DSS}{cond_name}_heart_todss.pkl', 'rb') as f:
+                                todss = pickle.load(f)
+                            with open(f'{input_path_DSS}{cond_name}_heart_fromdss.pkl', 'rb') as f:
+                                fromdss = pickle.load(f)
+                            reconstructed_data = remove_comps_DSS(raw_data, len(esg_chans), n, todss, fromdss)
+                            replace_kwargs = dict(
+                                new_data=reconstructed_data.T  # n_channels, n_times
+                            )
+                            # Replace and save
+                            clean_raw = raw.copy().apply_function(replace_data, picks=esg_chans, channel_wise=False,
+                                                                  **replace_kwargs)
+                            evoked = evoked_from_raw(clean_raw, iv_epoch, iv_baseline, trigger_name, reduced_epochs)
+
+                            # Now we have an evoked potential about the heartbeat
+                            # Want to compute the RMS for each channel
+                            res_chan_DSS = []
+                            for ch in esg_chans:
+                                # Pick a single channel
+                                evoked_ch = evoked.copy().pick_channels([ch], ordered=False)
+                                data = evoked_ch.data[0, 0:]  # Format n_channels x n_times
+                                rms = np.sqrt(np.mean(data ** 2))
+                                res_chan_DSS.append(rms)
+
+                            # Now have rms for each subject, for each channel and condition
+                            if cond_name == 'median':
+                                globals()[f"res_med_DSS_{n}"][subject - 1, :] = res_chan_DSS
+                            elif cond_name == 'tibial':
+                                globals()[f"res_tib_DSS_{n}"][subject - 1, :] = res_chan_DSS
+
+                    # Save to file
+                    saveres.res_med = globals()[f"res_med_DSS_{n}"]
+                    saveres.res_tib = globals()[f"res_tib_DSS_{n}"]
+                    dataset_keywords = [a for a in dir(saveres) if not a.startswith('__')]
+
+                    fn = f"/data/pt_02569/tmp_data/dss_heartart_py/res_{n}.h5"
+
+                    with h5py.File(fn, "w") as outfile:
+                        for keyword in dataset_keywords:
+                            outfile.create_dataset(keyword, data=getattr(saveres, keyword))
+
             else:
                 # Matrix of dimensions no.subjects x no. channels
                 res_med = np.zeros((len(subjects), 39))
@@ -190,7 +334,10 @@ if __name__ == '__main__':
                    'ICA': "/data/pt_02569/tmp_data/baseline_ica_py/",
                    'ICA-Anterior': "/data/pt_02569/tmp_data/baseline_ica_py/",
                    'ICA-Separate': "/data/pt_02569/tmp_data/baseline_ica_py/",
-                   'SSP': "/data/pt_02569/tmp_data/ssp_py/"}
+                   'SSP': "/data/pt_02569/tmp_data/ssp_py/",
+                   'CCA_heart': "/data/pt_02569/tmp_data/cca_heartart_py/",
+                   'DSS_heart': "/data/pt_02569/tmp_data/dss_heartart_py/"
+                   }
 
     # All files are 36x39 dimensions - n_subjects x n_channels
     keywords = ['res_med', 'res_tib']
@@ -200,50 +347,8 @@ if __name__ == '__main__':
         res_med_prep = infile[keywords[0]][()]
         res_tib_prep = infile[keywords[1]][()]
 
-    print("\n")
-    print('All Channels Residual Intensity')
-    print('Warning: For ICA separated, all channels are included but only the relevant patch has been processed via ICA,'
-          'the numbers are therefore only accurate for the relevant channels computations')
-    for i in np.arange(0, len(input_paths)):
-        name = list(input_paths.keys())[i]
-        input_path = input_paths[name]
-
-        if name == 'SSP':
-            # SSP
-            for n in np.arange(1, 21):  # 5, 21
-                fn = f"/data/pt_02569/tmp_data/ssp_py/res_{n}.h5"
-                with h5py.File(fn, "r") as infile:
-                    # Get the data
-                    res_med = infile[keywords[0]][()]
-                    res_tib = infile[keywords[1]][()]
-
-                residual_med = (np.mean(res_med / res_med_prep, axis=tuple([0, 1]))) * 100
-                residual_tib = (np.mean(res_tib / res_tib_prep, axis=tuple([0, 1]))) * 100
-
-                print(f"Residual SSP Median {n}: {residual_med:.4f}%")
-                print(f"Residual SSP Tibial {n}: {residual_tib:.4f}%")
-        else:
-            if name == 'ICA' and choose_limited:
-                fn = f"{input_path}res_lim.h5"
-            elif name == 'ICA-Anterior':
-                fn = f"{input_path}res_anteriorICA.h5"
-            elif name == 'ICA-Separate':
-                fn = f"{input_path}res_separateICA.h5"
-            else:
-                fn = f"{input_path}res.h5"
-            with h5py.File(fn, "r") as infile:
-                # Get the data
-                res_med = infile[keywords[0]][()]
-                res_tib = infile[keywords[1]][()]
-
-            residual_med = (np.mean(res_med / res_med_prep, axis=tuple([0, 1]))) * 100
-            residual_tib = (np.mean(res_tib / res_tib_prep, axis=tuple([0, 1]))) * 100
-
-            print(f'Residual {name} Median: {residual_med:.4f}%')
-            print(f'Residual {name} Tibial: {residual_tib:.4f}%')
-
     ############################################################################################
-    # Now look at residual intensity for just our channels of interest
+    # Looking at residual intensity for just our channels of interest
     #     if cond_name == 'tibial':
     #         channels = ['S23', 'L1', 'S31']
     #     elif cond_name == 'median':
@@ -262,10 +367,9 @@ if __name__ == '__main__':
         name = list(input_paths.keys())[i]
         input_path = input_paths[name]
 
-        if name == 'SSP':
-            # SSP
+        if name in ['SSP', 'CCA_heart', 'DSS_heart']:
             for n in np.arange(1, 21):  # 5, 21
-                fn = f"/data/pt_02569/tmp_data/ssp_py/res_{n}.h5"
+                fn = f"{input_path}res_{n}.h5"
                 with h5py.File(fn, "r") as infile:
                     # Get the data
                     res_med = infile[keywords[0]][()]
@@ -274,8 +378,8 @@ if __name__ == '__main__':
                 residual_med = (np.mean(res_med[:, median_pos] / res_med_prep[:, median_pos], axis=tuple([0, 1]))) * 100
                 residual_tib = (np.mean(res_tib[:, tibial_pos] / res_tib_prep[:, tibial_pos], axis=tuple([0, 1]))) * 100
 
-                print(f"Residual SSP Median {n}: {residual_med:.4f}%")
-                print(f"Residual SSP Tibial {n}: {residual_tib:.4f}%")
+                print(f"Residual {name} Median {n}: {residual_med:.4f}%")
+                print(f"Residual {name} Tibial {n}: {residual_tib:.4f}%")
         else:
             if name == 'ICA' and choose_limited:
                 fn = f"{input_path}res_lim.h5"

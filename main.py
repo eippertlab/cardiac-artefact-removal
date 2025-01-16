@@ -108,22 +108,22 @@ if __name__ == '__main__':
                 apply_SSP(subject, condition, srmr_nr, sampling_rate)
 
     ##############################################################################################################
-    # Run CCA on the data for cardiac artefact removal
+    # Run CCA on the data for cardiac artefact removal (runs images for removing 1-20 comps if True)
     ##############################################################################################################
+    plot_images = False
     if CCA_heart_flag:
             for subject in subjects:
                 for condition in conditions:
-                    for no_exclude_comps in np.arange(1, 21):
-                        run_CCA_heart(subject, condition, srmr_nr, no_exclude_comps)
+                    run_CCA_heart(subject, condition, srmr_nr, plot_images)
 
     ##############################################################################################################
-    # Run CCA on the data for cardiac artefact removal
+    # Run DSS on the data for cardiac artefact removal (runs images for removing 1-20 comps if True)
     ##############################################################################################################
+    plot_images = False
     if DSS_heart_flag:
         for subject in subjects:
             for condition in conditions:
-                for no_exclude_comps in np.arange(1, 21):
-                    run_DSS_heart(subject, condition, srmr_nr, no_exclude_comps)
+                run_DSS_heart(subject, condition, srmr_nr, plot_images)
 
     ##############################################################################################################
     # Run CCA on the data for signal enhancement
