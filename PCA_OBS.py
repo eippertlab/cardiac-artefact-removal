@@ -184,7 +184,7 @@ def PCA_OBS(data, **kwargs):
                 post_range = peak_range
                 if pre_range > peak_range:
                     pre_range = peak_range
-                fitted_art, _ = fit_ecgTemplate(data, pca_template, peak_idx(p), peak_range, pre_range, post_range,
+                fitted_art, _ = fit_ecgTemplate(data, pca_template, peak_idx[p], peak_range, pre_range, post_range,
                                                 baseline_range, midP, fitted_art, post_idx_nextPeak, n_samples_fit)
                 window_start_idx.append(peak_idx[p] - peak_range)
                 window_end_idx.append(peak_idx[p] + peak_range)

@@ -17,8 +17,8 @@ from run_CCA import run_CCA
 
 if __name__ == '__main__':
     n_subjects = 36  # Number of subjects
-    subjects = np.arange(1, 37)  # 1 through 36 to access subject data
-    # subjects = [1]
+    # subjects = np.arange(1, 37)  # 1 through 36 to access subject data
+    subjects = [1]
     srmr_nr = 1  # Experiment Number
     conditions = [2, 3]  # Conditions of interest
     sampling_rate = 1000
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     pchip_interpolation = False  # If true import with pchip, otherwise use linear interpolation (False is standard in this project)
 
     ######## PCA-OBS #########
-    heart_removal = False
+    heart_removal = True
     pchip = False  # Whether to use pchip prepared data or not (False is standard in this project)
     heart_removal_tukey = False  # Fitted artefact multiplied by tukey window
 
@@ -41,10 +41,10 @@ if __name__ == '__main__':
     SSP_flag = False
 
     ######## CCA for cardiac artefact ########
-    CCA_heart_flag = True
+    CCA_heart_flag = False
 
     ######## DSS for cardiac artefact ########
-    DSS_heart_flag = True
+    DSS_heart_flag = False
 
     ######## CCA for signal enhancement ########
     CCA_flag = False
