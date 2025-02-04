@@ -8,6 +8,7 @@ from IsopotentialFunctions_2axis import mrmr_esg_isopotentialplot_cbar
 from scipy.io import loadmat
 import os
 import matplotlib as mpl
+from scipy.stats import sem
 mpl.rcParams['pdf.fonttype'] = 42
 
 
@@ -141,10 +142,13 @@ if __name__ == '__main__':
                 ##########################################################################################
                 # Plot the time course
                 ##########################################################################################
-                grand_average = mne.grand_average(evoked_list, interpolate_bads=False, drop_bads=False)
-                relevant_channel = grand_average.pick_channels(channel, ordered=True)
-                axes[count_row, count_method].plot(relevant_channel.times, np.mean(relevant_channel.data[:, :],
-                                                                                   axis=0) * 10 ** 6, color='black')
+                evoked_list_ch_data = [evoked.pick(channel).data*10**6 for evoked in evoked_list]
+                grand_average = np.mean(evoked_list_ch_data, axis=0)
+                error = sem(evoked_list_ch_data)
+                upper = grand_average + error
+                lower = grand_average - error
+                axes[count_row, count_method].plot(epochs.times, grand_average.reshape(-1), color='black')
+                axes[count_row, count_method].fill_between(epochs.times, lower.reshape(-1), upper.reshape(-1), alpha=0.3, color='black')
                 if count_method == 0:
                     axes[count_row, count_method].set_ylabel('Amplitude (\u03BCV)')
                 if shorter_timescale:

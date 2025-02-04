@@ -28,7 +28,7 @@ if __name__ == '__main__':
     pchip_interpolation = False  # If true import with pchip, otherwise use linear interpolation (False is standard in this project)
 
     ######## PCA-OBS #########
-    heart_removal = True
+    heart_removal = False
     pchip = False  # Whether to use pchip prepared data or not (False is standard in this project)
     heart_removal_tukey = False  # Fitted artefact multiplied by tukey window
 

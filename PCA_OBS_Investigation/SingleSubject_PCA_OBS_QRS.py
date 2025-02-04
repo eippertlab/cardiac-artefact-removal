@@ -72,13 +72,8 @@ if __name__ == '__main__':
     cond_names = ['median', 'tibial']
     sampling_rate = 1000
 
-    cfg_path = "/data/pt_02569/"  # Contains important info about experiment
-    cfg = loadmat(cfg_path + 'cfg.mat')
-    notch_freq = cfg['notch_freq'][0]
-    esg_bp_freq = cfg['esg_bp_freq'][0]
-
-    iv_epoch = cfg['iv_epoch'][0] / 1000
-    iv_baseline = cfg['iv_baseline'][0] / 1000
+    iv_baseline = [-300 / 1000, -200 / 1000]
+    iv_epoch = [-300 / 1000, 450 / 1000]
 
     esg_chans = ['S35', 'S24', 'S36', 'Iz', 'S17', 'S15', 'S32', 'S22',
                  'S19', 'S26', 'S28', 'S9', 'S13', 'S11', 'S7', 'SC1', 'S4', 'S18',
@@ -86,7 +81,7 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    image_path = "/data/p_02569/Images/SingleSubject_PCA-OBS_Dataset1/"
+    image_path = "/data/p_02569/Images/SingleSubject_PCA-OBS_Dataset1_QRS/"
     os.makedirs(image_path, exist_ok=True)
 
     filter = False
@@ -94,11 +89,11 @@ if __name__ == '__main__':
     for cond_name in cond_names:  # Conditions (median, tibial)
 
         if cond_name == 'tibial':
-            trigger_name = 'Tibial - Stimulation'
+            trigger_name = 'qrs'
             channel = 'L1'
 
         elif cond_name == 'median':
-            trigger_name = 'Median - Stimulation'
+            trigger_name = 'qrs'
             channel = 'SC6'
 
         for subject in subjects:  # All subjects
@@ -108,11 +103,14 @@ if __name__ == '__main__':
             # Uncleaned
             ###############################################################################
             input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + '/'
-            fname = f"epochs_{cond_name}.fif"
+            fname = f"noStimart_sr1000_{cond_name}_withqrs.fif"
+            raw = mne.io.read_raw_fif(input_path + fname, preload=True)
             if filter:
-                epochs = mne.read_epochs(input_path+fname, preload=True).filter(l_freq=30, h_freq=None, n_jobs=10)
-            else:
-                epochs = mne.read_epochs(input_path+fname, preload=True)
+                raw.filter(l_freq=30, h_freq=None)
+            events, event_ids = mne.events_from_annotations(raw)
+            event_id_dict = {key: value for key, value in event_ids.items() if key == trigger_name}
+            epochs = mne.Epochs(raw, events, event_id=event_id_dict, tmin=iv_epoch[0], tmax=iv_epoch[1],
+                                baseline=tuple(iv_baseline))
             evoked_uncleaned = epochs.average()
             evoked_uncleaned.reorder_channels(esg_chans)
 
@@ -155,18 +153,9 @@ if __name__ == '__main__':
             ax1.tick_params(axis='y', colors=pal[1])
             ax10.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6, label='Uncleaned',
                       linewidth=0.5, linestyle='dashed', color='blue')
-            ax10.set_yticklabels([])
+            # ax10.set_yticklabels([])
 
-            # Add vertical line at expected latency
-            if cond_name == 'tibial':
-                ax1.axvline(x=22 / 1000, color='g', linewidth=0.7, label='22ms')
-
-            elif cond_name == 'median':
-                ax1.axvline(x=13 / 1000, color='g', linewidth=0.7, label='13ms')
-
-            ax1.axvline(x=-0.007, color='r', linewidth=0.7)
-            ax1.axvline(x=0.007, color='r', linewidth=0.7)
-            ax1.set_xlim([-100/1000, 300/1000])
+            ax1.set_xlim([-200/1000, 400/1000])
 
             if cond_name == 'median':
                 plt.suptitle(f"Subject {subject}, Channel {channel}")
