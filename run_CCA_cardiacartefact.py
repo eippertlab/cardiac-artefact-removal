@@ -10,10 +10,8 @@ from meet import spatfilt
 from scipy.io import loadmat
 from get_conditioninfo import get_conditioninfo
 from replace_data import replace_data
-from Archive.Plotting_Code.IsopotentialFunctions import mrmr_esg_isopotentialplot
 import matplotlib.pyplot as plt
 import pickle
-import matplotlib as mpl
 
 
 def run_CCA_heart(subject, condition, srmr_nr, plot_images):

@@ -5,7 +5,7 @@
 import numpy as np
 import mne
 import matplotlib.pyplot as plt
-from IsopotentialFunctions import mrmr_esg_isopotentialplot
+from Plotting_Code_Publication.IsopotentialFunctions import mrmr_esg_isopotentialplot
 from scipy.io import loadmat
 import os
 

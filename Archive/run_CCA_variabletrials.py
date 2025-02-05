@@ -8,7 +8,7 @@ from meet import spatfilt
 from scipy.io import loadmat
 from get_conditioninfo import get_conditioninfo
 from get_esg_channels import get_esg_channels
-from Archive.Plotting_Code.IsopotentialFunctions import mrmr_esg_isopotentialplot
+from Plotting_Code_Publication.IsopotentialFunctions import mrmr_esg_isopotentialplot
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
