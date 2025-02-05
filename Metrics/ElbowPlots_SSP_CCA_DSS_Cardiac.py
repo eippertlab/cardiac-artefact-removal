@@ -130,35 +130,3 @@ if __name__ == '__main__':
         axes[2].set_xticks(projectors)
         plt.tight_layout()
         plt.show()
-
-#         # Ranked data frames
-#         df_med = pd.DataFrame()
-#         df_med['Projections'] = projectors
-#         df_med['SNR'] = snr_med
-#         df_med['RI'] = residual_med
-#         df_med['INPSR'] = inps_med
-#         # Get a ranking for SNR, RI, INPSR
-#         df_med['Ranked_SNR'] = df_med['SNR'].rank(ascending=False)
-#         df_med['Ranked_RI'] = df_med['RI'].rank()  # Smaller better
-#         df_med['Ranked_INPSR'] = df_med['INPSR'].rank(ascending=False)
-#         # Try instead to normalise values and get a weighted sum and then do a ranking
-#         df_med['RankSum'] = df_med['Ranked_SNR'] + 0.5*df_med['Ranked_RI'] + 0.5*df_med['Ranked_INPSR']
-#         df_med['rank'] = df_med['RankSum'].rank()
-#         print(df_med)
-#         # ToDo: RI should be added differently as pattern is opposite
-#         # ToDo: Weighted sum not working any better than weighting rankings
-#
-#         # Ranked data frames
-#         df_tib = pd.DataFrame()
-#         df_tib['Projections'] = projectors
-#         df_tib['SNR'] = snr_tib
-#         df_tib['RI'] = residual_tib
-#         df_tib['INPSR'] = inps_tib
-#         # Get a ranking for SNR, RI, INPSR
-#         df_tib['Ranked_SNR'] = df_tib['SNR'].rank(ascending=False)
-#         df_tib['Ranked_RI'] = df_tib['RI'].rank()  # Smaller better
-#         df_tib['Ranked_INPSR'] = df_tib['INPSR'].rank(ascending=False)
-#         df_tib['RankSum'] = df_tib['Ranked_SNR'] + 0.5 * df_tib['Ranked_RI'] + 0.5 * df_tib['Ranked_INPSR']
-#         df_tib['rank'] = df_tib['RankSum'].rank()
-#         print(df_tib)
-#         exit()
