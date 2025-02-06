@@ -34,14 +34,8 @@ def run_DSS(subject, condition, srmr_nr, data_string, n):
 
     potential_path = f"/data/p_02068/SRMR1_experiment/analyzed_data/esg/{subject_id}/"
 
-    # Select the right files based on the data_string
-    if data_string == 'PCA':
-        input_path = "/data/pt_02569/tmp_data/ecg_rm_py/" + subject_id + "/"
-        fname = f'data_clean_ecg_spinal_{cond_name}_withqrs.fif'
-        save_path = "/data/pt_02569/tmp_data/ecg_rm_py_dss/" + subject_id + "/"
-        os.makedirs(save_path, exist_ok=True)
-
-    elif data_string == 'Prep':
+    # Select the right files based on the data_string - only looking at top ranked methods and prep
+    if data_string == 'Prep':
         input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
         fname = f'noStimart_sr1000_{cond_name}_withqrs.fif'
         save_path = "/data/pt_02569/tmp_data/prepared_py_dss/" + subject_id + "/"
@@ -60,7 +54,7 @@ def run_DSS(subject, condition, srmr_nr, data_string, n):
         os.makedirs(save_path, exist_ok=True)
 
     else:
-        raise ValueError('Invalid Data String Name Entered')
+        raise ValueError('Invalid Data String Name Entered: Must be Prep, ICA or SSP')
 
     brainstem_chans, cervical_chans, lumbar_chans, ref_chan = get_esg_channels()
 

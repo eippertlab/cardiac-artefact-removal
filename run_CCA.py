@@ -30,14 +30,8 @@ def run_CCA(subject, condition, srmr_nr, data_string, n):
 
     potential_path = f"/data/p_02068/SRMR1_experiment/analyzed_data/esg/{subject_id}/"
 
-    # Select the right files based on the data_string
-    if data_string == 'PCA':
-        input_path = "/data/pt_02569/tmp_data/ecg_rm_py/" + subject_id + "/"
-        fname = f'data_clean_ecg_spinal_{cond_name}_withqrs.fif'
-        save_path = "/data/pt_02569/tmp_data/ecg_rm_py_cca/" + subject_id + "/"
-        os.makedirs(save_path, exist_ok=True)
-
-    elif data_string == 'Prep':
+    # Select the right files based on the data_string - only looking at top ranked methods and prep
+    if data_string == 'Prep':
         input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
         fname = f'noStimart_sr1000_{cond_name}_withqrs.fif'
         save_path = "/data/pt_02569/tmp_data/prepared_py_cca/" + subject_id + "/"
@@ -56,7 +50,7 @@ def run_CCA(subject, condition, srmr_nr, data_string, n):
         os.makedirs(save_path, exist_ok=True)
 
     else:
-        raise ValueError('Invalid Data String Name Entered')
+        raise ValueError('Invalid Data String Name Entered: Must be Prep, ICA or SSP')
 
     brainstem_chans, cervical_chans, lumbar_chans, ref_chan = get_esg_channels()
 
@@ -232,10 +226,10 @@ def run_CCA(subject, condition, srmr_nr, data_string, n):
             time = plt.imread(figure_path_time + f'{data_string}_{cond_name}.png')
 
         fig, axes = plt.subplots(1, 2, figsize=(10, 6))
-        axes[0, 0].imshow(time)
-        axes[0, 0].axis('off')
-        axes[0, 1].imshow(spatial)
-        axes[0, 1].axis('off')
+        axes[0].imshow(time)
+        axes[0].axis('off')
+        axes[1].imshow(spatial)
+        axes[1].axis('off')
 
         plt.subplots_adjust(top=0.95, wspace=0, hspace=0)
 

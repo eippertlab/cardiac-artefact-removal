@@ -14,11 +14,12 @@ from ICA_separated import run_ica_separatepatches
 from run_CCA_cardiacartefact import run_CCA_heart
 from run_DSS_cardiacartefact import run_DSS_heart
 from run_CCA import run_CCA
+from run_DSS import run_DSS
 
 if __name__ == '__main__':
     n_subjects = 36  # Number of subjects
-    # subjects = np.arange(1, 37)  # 1 through 36 to access subject data
-    subjects = [1]
+    subjects = np.arange(1, 37)  # 1 through 36 to access subject data
+    # subjects = [1]
     srmr_nr = 1  # Experiment Number
     conditions = [2, 3]  # Conditions of interest
     sampling_rate = 1000
@@ -47,7 +48,10 @@ if __name__ == '__main__':
     DSS_heart_flag = False
 
     ######## CCA for signal enhancement ########
-    CCA_flag = False
+    CCA_flag = True
+
+    ######## DSS for signal enhancement ########
+    DSS_flag = True
 
     ###############################################################################################################
     # Import Data from BIDS directory
@@ -128,17 +132,21 @@ if __name__ == '__main__':
     ##############################################################################################################
     # Run CCA on the data for signal enhancement
     ##############################################################################################################
-    data_strings = ['Prep', 'PCA']  # 'ICA' not used due to how decimated the signal is
-    n = 5
+    data_strings = ['Prep', 'ICA', 'SSP']  # Only looking at Uncleaned and top ranking methods
+    n = 5  # Dummy variable unless we're looking at SSP
     if CCA_flag:
         for data_string in data_strings:
             for subject in subjects:
                 for condition in conditions:
                     run_CCA(subject, condition, srmr_nr, data_string, n)
 
-        # Treat SSP separately
-        data_string = 'SSP'
-        for n in np.arange(5, 7):  # 21
+    ##############################################################################################################
+    # Run DSS on the data for signal enhancement
+    ##############################################################################################################
+    data_strings = ['Prep', 'ICA', 'SSP'] # Only looking at Uncleaned and top ranking methods
+    n = 5  # Dummy variable unless we're looking at SSP
+    if DSS_flag:
+        for data_string in data_strings:
             for subject in subjects:
                 for condition in conditions:
-                    run_CCA(subject, condition, srmr_nr, data_string, n)
+                    run_DSS(subject, condition, srmr_nr, data_string, n)
