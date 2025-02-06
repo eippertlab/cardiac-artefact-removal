@@ -18,7 +18,7 @@ if __name__ == '__main__':
     save_path = '/data/p_02569/Images/SEP_Combined_D1V2/'
     os.makedirs(save_path, exist_ok=True)
 
-    methods = ['Uncleaned', 'PCA', 'ICA', 'SSP']
+    methods = ['Uncleaned', 'PCA', 'ICA', 'SSP', 'CCA-cardiac', 'DSS-cardiac']
 
     cfg_path = "/data/pt_02569/"  # Contains important info about experiment
     cfg = loadmat(cfg_path + 'cfg.mat')
@@ -36,15 +36,15 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    trials = [True, False, True, False]
+    trials = [False, True, False, True]
     time = [False, True, True, False]
 
     for reduced_trials, shorter_timescale in zip(trials, time):
         for trigger_name in trigger_names:
             count_method = 0  # To cycle through the subplots
             count_row = 0
-            fig, axes = plt.subplots(3, 5, figsize=[18, 14], gridspec_kw={'width_ratios': [15, 15, 15, 15, 1]})
-            axes[0, 4].axis('off')
+            fig, axes = plt.subplots(3, 7, figsize=[18, 14], gridspec_kw={'width_ratios': [2, 2, 2, 2, 2, 2, 0.1]})
+            axes[0, 6].axis('off')
 
             for method in methods:
                 evoked_list = []
@@ -64,22 +64,32 @@ if __name__ == '__main__':
                         channel = ['L1']
 
                     if method == 'Uncleaned':
-                        data_path = '/data/pt_02569/tmp_data/prepared_py/' + subject_id + \
-                                    '/epochs_' + cond_name + '.fif'
+                        data_path = f"/data/pt_02569/tmp_data/prepared_py/{subject_id}/epochs_{cond_name}.fif"
 
                     elif method == 'PCA':
-                        data_path_raw = '/data/pt_02569/tmp_data/ecg_rm_py/' + subject_id + \
-                                    '/data_clean_ecg_spinal_' + cond_name + '_withqrs.fif'
+                        data_path_raw = f"/data/pt_02569/tmp_data/ecg_rm_py/{subject_id}/data_clean_ecg_spinal_{cond_name}_withqrs.fif"
 
-                        data_path_epochs = '/data/pt_02569/tmp_data/ecg_rm_py/' + subject_id + \
-                                        '/epochs_' + cond_name + '.fif'
+                        data_path_epochs = f"/data/pt_02569/tmp_data/ecg_rm_py/{subject_id}/epochs_{cond_name}.fif"
 
                     elif method == 'ICA':
-                        data_path = '/data/pt_02569/tmp_data/baseline_ica_py/' + subject_id + \
-                                    '/epochs_' + cond_name + '.fif'
+                        data_path = f"/data/pt_02569/tmp_data/baseline_ica_py/{subject_id}/epochs_{cond_name}.fif"
 
                     elif method == 'SSP':
-                        data_path = "/data/pt_02569/tmp_data/ssp_py/" + subject_id + f"/6 projections/epochs_" + cond_name + ".fif"
+                        data_path = f"/data/pt_02569/tmp_data/ssp_py/{subject_id}/5 projections/epochs_{cond_name}.fif"
+
+                    elif method == 'CCA-cardiac':
+                        if cond_name == 'median':
+                            n = 9
+                        elif cond_name == 'tibial':
+                            n = 6
+                        data_path = f"/data/pt_02569/tmp_data/cca_heartart_py/{subject_id}/epochs_{cond_name}_{n}.fif"
+
+                    elif method == 'DSS-cardiac':
+                        if cond_name == 'median':
+                            n = 9
+                        elif cond_name == 'tibial':
+                            n = 7
+                        data_path = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/epochs_{cond_name}_{n}.fif"
 
                     # for PCA - want to interpolate the hump for the TFR plot
                     if method == 'PCA':
@@ -137,7 +147,9 @@ if __name__ == '__main__':
                 options = {0: 'Uncleaned',
                            1: 'PCA-OBS',
                            2: 'ICA',
-                           3: 'SSP'
+                           3: 'SSP',
+                           4: 'CCA-cardiac',
+                           5: 'DSS-cardiac'
                            }
                 ##########################################################################################
                 # Plot the time course
@@ -194,7 +206,7 @@ if __name__ == '__main__':
                               tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
                 if count_method != 0:
                     axes[count_row, count_method].set_ylabel(None)
-                cb = fig.colorbar(axes[count_row, count_method].images[-1], cax=axes[count_row, 4])
+                cb = fig.colorbar(axes[count_row, count_method].images[-1], cax=axes[count_row, 6])
                 cb.set_label('Power (dB)')
                 count_row += 1
 
@@ -212,7 +224,7 @@ if __name__ == '__main__':
                 colorbar_axes = [-0.5, 0.5]
                 subjects_4grid = np.arange(1, 37)
                 # then the function takes the average over the channel positions of all those subjects
-                if count_method < 3:
+                if count_method < 5:
                     colorbar = False
                     mrmr_esg_isopotentialplot(subjects_4grid, chanvalues, colorbar_axes, chan_labels, colorbar,
                                               time_point, axes[count_row, count_method])
@@ -221,7 +233,7 @@ if __name__ == '__main__':
                     cf = mrmr_esg_isopotentialplot_cbar(subjects_4grid, chanvalues, colorbar_axes, chan_labels,
                                                         colorbar, time_point, axes[count_row, count_method])
                     ticks = [colorbar_axes[0], 0, colorbar_axes[1]]
-                    fig.colorbar(cf, cax=axes[count_row, 4], label='Amplitude (\u03BCV)', ticks=ticks)
+                    fig.colorbar(cf, cax=axes[count_row, 6], label='Amplitude (\u03BCV)', ticks=ticks)
                 axes[count_row, count_method].set_xticklabels([])
                 axes[count_row, count_method].set_yticklabels([])
                 axes[count_row, count_method].set_xticks([])

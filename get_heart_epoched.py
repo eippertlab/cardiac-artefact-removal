@@ -3,8 +3,12 @@
 import mne
 import os
 import numpy as np
+import pickle
 from scipy.io import loadmat
 from Metrics.SNR_functions import evoked_from_raw
+from replace_data import replace_data
+from remove_components_CCA import remove_comps_CCA
+from remove_components_DSS import remove_comps_DSS
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
@@ -30,9 +34,9 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    methods = [True, True, True]
-    method_names = ['Prep', 'PCA', 'ICA']  # Will treat SSP separately since there are multiple
-    SSP = True
+    methods = [False, False, False, True, True]
+    method_names = ['Prep', 'PCA', 'ICA', 'CCA-heart', 'DSS-heart']  # Will treat SSP separately since there are multiple
+    SSP = False
 
     # To use mne grand_average method, need to generate a list of evoked potentials for each subject
     for i in np.arange(0, len(methods)):  # Methods Applied
@@ -82,6 +86,64 @@ if __name__ == '__main__':
                         epochs = mne.Epochs(raw, events, event_id=event_id_dict, tmin=iv_epoch[0], tmax=iv_epoch[1],
                                             baseline=tuple(iv_baseline))
                         epochs.save(fname=input_path + f'epochs_{cond_name}_qrs.fif', overwrite=True)
+
+                    elif method == 'CCA-heart':
+                        if cond_name == 'median':
+                            n = 9
+                        elif cond_name == 'tibial':
+                            n = 6
+                        # Load prepared_data
+                        input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
+                        raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr1000_{cond_name}_withqrs.fif", preload=True)
+                        raw_data = raw.get_data(picks=esg_chans)
+                        input_path_CCA = f"/data/pt_02569/tmp_data/cca_heartart_py/{subject_id}/"
+
+                        # Load weights and spatial patterns
+                        with open(f'{input_path_CCA}{cond_name}_heart_cca_Ast.pkl', 'rb') as f:
+                            A_st = pickle.load(f)
+                        with open(f'{input_path_CCA}{cond_name}_heart_cca_Wst.pkl', 'rb') as f:
+                            W_st = pickle.load(f)
+                        reconstructed_data = remove_comps_CCA(raw_data, n, W_st, A_st)
+                        replace_kwargs = dict(
+                            new_data=reconstructed_data.T  # n_channels, n_times
+                        )
+                        # Replace and save
+                        clean_raw = raw.copy().apply_function(replace_data, picks=esg_chans, channel_wise=False,
+                                                              **replace_kwargs)
+                        events, event_ids = mne.events_from_annotations(clean_raw)
+                        event_id_dict = {key: value for key, value in event_ids.items() if key == trigger_name}
+                        epochs = mne.Epochs(clean_raw, events, event_id=event_id_dict, tmin=iv_epoch[0], tmax=iv_epoch[1],
+                                            baseline=tuple(iv_baseline))
+                        epochs.save(fname=input_path_CCA + f'epochs_{cond_name}_{n}_qrs.fif', overwrite=True)
+
+                    elif method == 'DSS-heart':
+                        if cond_name == 'median':
+                            n = 9
+                        elif cond_name == 'tibial':
+                            n = 7
+                        # Load prepared_data
+                        input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
+                        raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr1000_{cond_name}_withqrs.fif", preload=True)
+                        raw_data = raw.get_data(picks=esg_chans)
+                        input_path_DSS = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
+
+                        # Load weights and spatial patterns
+                        with open(f'{input_path_DSS}{cond_name}_heart_todss.pkl', 'rb') as f:
+                            todss = pickle.load(f)
+                        with open(f'{input_path_DSS}{cond_name}_heart_fromdss.pkl', 'rb') as f:
+                            fromdss = pickle.load(f)
+                        reconstructed_data = remove_comps_DSS(raw_data, len(esg_chans), n, todss, fromdss)
+                        replace_kwargs = dict(
+                            new_data=reconstructed_data.T  # n_channels, n_times
+                        )
+                        # Replace and save
+                        clean_raw = raw.copy().apply_function(replace_data, picks=esg_chans, channel_wise=False,
+                                                              **replace_kwargs)
+                        events, event_ids = mne.events_from_annotations(clean_raw)
+                        event_id_dict = {key: value for key, value in event_ids.items() if key == trigger_name}
+                        epochs = mne.Epochs(clean_raw, events, event_id=event_id_dict, tmin=iv_epoch[0], tmax=iv_epoch[1],
+                                            baseline=tuple(iv_baseline))
+                        epochs.save(fname=input_path_DSS + f'epochs_{cond_name}_{n}_qrs.fif', overwrite=True)
 
     # Now deal with SSP plots - Just doing 5 & 6 for now
     if SSP:

@@ -35,7 +35,9 @@ if __name__ == '__main__':
         evoked_list_prep = []
         evoked_list_pca = []
         evoked_list_ica = []
-        evoked_list_ssp6 = []
+        evoked_list_ssp5 = []
+        evoked_list_cca = []
+        evoked_list_dss = []
 
         if cond_name == 'tibial':
             trigger_name = 'qrs'
@@ -54,9 +56,6 @@ if __name__ == '__main__':
             evoked = epochs.average()
             evoked.reorder_channels(esg_chans)
             evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
-            # fname = f"noStimart_sr{sampling_rate}_{cond_name}_withqrs.fif"
-            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
-            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
             evoked_list_prep.append(power)
 
@@ -64,9 +63,6 @@ if __name__ == '__main__':
             fname = f"epochs_{cond_name}_qrs.fif"
             epochs = mne.read_epochs(input_path + fname, preload=True)
             evoked = epochs.average()
-            # fname = f"data_clean_ecg_spinal_{cond_name}_withqrs.fif"
-            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
-            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             evoked.reorder_channels(esg_chans)
             evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
@@ -76,30 +72,52 @@ if __name__ == '__main__':
             fname = f"epochs_{cond_name}_qrs.fif"
             epochs = mne.read_epochs(input_path + fname, preload=True)
             evoked = epochs.average()
-            # fname = f"clean_baseline_ica_auto_{cond_name}.fif"
-            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
-            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             evoked.reorder_channels(esg_chans)
             evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
             evoked_list_ica.append(power)
 
-            input_path = f"/data/pt_02569/tmp_data/ssp_py/{subject_id}/6 projections/"
+            input_path = f"/data/pt_02569/tmp_data/ssp_py/{subject_id}/5 projections/"
             fname = f"epochs_{cond_name}_qrs.fif"
             epochs = mne.read_epochs(input_path + fname, preload=True)
             evoked = epochs.average()
-            # fname = f"ssp_cleaned_{cond_name}.fif"
-            # raw = mne.io.read_raw_fif(input_path + fname, preload=True)
-            # evoked = evoked_from_raw(raw, iv_epoch, iv_baseline, trigger_name, False)
             evoked.reorder_channels(esg_chans)
             evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
             power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
-            evoked_list_ssp6.append(power)
+            evoked_list_ssp5.append(power)
+
+            input_path = f"/data/pt_02569/tmp_data/cca_heartart_py/{subject_id}/"
+            if cond_name == 'median':
+                n = 9
+            elif cond_name == 'tibial':
+                n = 6
+            fname = f"epochs_{cond_name}_{n}_qrs.fif"
+            epochs = mne.read_epochs(input_path + fname, preload=True)
+            evoked = epochs.average()
+            evoked.reorder_channels(esg_chans)
+            evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
+            power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
+            evoked_list_cca.append(power)
+
+            input_path = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
+            if cond_name == 'median':
+                n = 9
+            elif cond_name == 'tibial':
+                n = 7
+            fname = f"epochs_{cond_name}_{n}_qrs.fif"
+            epochs = mne.read_epochs(input_path + fname, preload=True)
+            evoked = epochs.average()
+            evoked.reorder_channels(esg_chans)
+            evoked = evoked.pick_channels(channel).crop(tmin=iv_epoch[0], tmax=iv_epoch[1])
+            power = mne.time_frequency.tfr_stockwell(evoked, fmin=fmin, fmax=fmax, width=1.0, n_jobs=5)
+            evoked_list_dss.append(power)
 
         averaged_prep = mne.grand_average(evoked_list_prep, interpolate_bads=False, drop_bads=False)
         averaged_pca = mne.grand_average(evoked_list_pca, interpolate_bads=False, drop_bads=False)
         averaged_ica = mne.grand_average(evoked_list_ica, interpolate_bads=False, drop_bads=False)
-        averaged_ssp6 = mne.grand_average(evoked_list_ssp6, interpolate_bads=False, drop_bads=False)
+        averaged_ssp5 = mne.grand_average(evoked_list_ssp5, interpolate_bads=False, drop_bads=False)
+        averaged_cca = mne.grand_average(evoked_list_cca, interpolate_bads=False, drop_bads=False)
+        averaged_dss = mne.grand_average(evoked_list_dss, interpolate_bads=False, drop_bads=False)
 
         tmin = -0.2
         tmax = 0.4
@@ -112,7 +130,7 @@ if __name__ == '__main__':
         #     vmin = -400
         #     vmax = -250
         # fig, ax = plt.subplots(1, 5, figsize=[18, 6], gridspec_kw={"width_ratios": [10, 10, 10, 10, 1]})
-        fig, ax = plt.subplots(1, 4, figsize=[24, 6], constrained_layout=True)
+        fig, ax = plt.subplots(1, 6, figsize=[24, 6], constrained_layout=True)
         averaged_prep.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
                           axes=ax[0], show=False, colorbar=False, dB=True,
                           tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
@@ -122,9 +140,15 @@ if __name__ == '__main__':
         averaged_ica.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
                           axes=ax[2], show=False, colorbar=False, dB=True,
                           tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
-        averaged_ssp6.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
+        averaged_ssp5.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
                           axes=ax[3], show=False, colorbar=False, dB=True,
                           tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
+        averaged_cca.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
+                           axes=ax[4], show=False, colorbar=False, dB=True,
+                           tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
+        averaged_dss.plot([0], baseline=iv_baseline, mode='mean', cmap='jet',
+                           axes=ax[5], show=False, colorbar=False, dB=True,
+                           tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
         # Add axis for colorbar display
         fig.subplots_adjust(bottom=0.25)
         cbar_ax = fig.add_axes([0.15, 0.1, 0.7, 0.05])
@@ -137,12 +161,18 @@ if __name__ == '__main__':
             ax[1].set_title('PCA-OBS')
             ax[2].set_title('ICA')
             ax[3].set_title('SSP')
+            ax[4].set_title('CCA-cardiac')
+            ax[5].set_title('DSS-cardiac')
         ax[1].set_yticklabels([])
         ax[1].set_ylabel(None)
         ax[2].set_yticklabels([])
         ax[2].set_ylabel(None)
         ax[3].set_yticklabels([])
         ax[3].set_ylabel(None)
+        ax[4].set_yticklabels([])
+        ax[4].set_ylabel(None)
+        ax[5].set_yticklabels([])
+        ax[5].set_ylabel(None)
         # if cond_name == 'median':
         #     plt.suptitle(f"Time-Frequency Representation of the Cardiac Artefact\n"
         #                  f"Cervical Spinal Cord")

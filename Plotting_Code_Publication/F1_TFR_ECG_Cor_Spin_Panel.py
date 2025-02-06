@@ -38,7 +38,7 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    image_path = "/data/p_02569/TimeFrequencyPlots_HeartPanel_Dataset1/"
+    image_path = "/data/p_02569/Images/TimeFrequencyPlots_HeartPanel_Dataset1/"
     os.makedirs(image_path, exist_ok=True)
 
     channel_types = ['ECG', 'Spinal', 'Cortical']
@@ -150,10 +150,7 @@ if __name__ == '__main__':
         cb = fig.colorbar(ax_ecg.images[-1], cax=cbar_ax)
         cb.set_label('Amplitude (dB)')
         fname = f"{cond_name}_CardiacTFRandTimeCourse_dB"
-        # print(dict)
         plt.tight_layout()
-        # plt.show()
-        # exit()
         fig.savefig(image_path+fname+'.png')
         plt.savefig(image_path + fname + '.pdf', bbox_inches='tight', format="pdf")
         plt.clf()

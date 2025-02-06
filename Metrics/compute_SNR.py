@@ -214,14 +214,14 @@ if __name__ == '__main__':
                         input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + "/"
                         raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr1000_{cond_name}_withqrs.fif", preload=True)
                         raw_data = raw.get_data(picks=esg_chans)
-                        input_path_CCA = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
+                        input_path_DSS = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
 
                         # Want the SNR for each selection of components removed from 1 to 20
                         for n in np.arange(1, 21):
                             # Load weights and spatial patterns
-                            with open(f'{input_path_CCA}{cond_name}_heart_todss.pkl', 'rb') as f:
+                            with open(f'{input_path_DSS}{cond_name}_heart_todss.pkl', 'rb') as f:
                                 todss = pickle.load(f)
-                            with open(f'{input_path_CCA}{cond_name}_heart_fromdss.pkl', 'rb') as f:
+                            with open(f'{input_path_DSS}{cond_name}_heart_fromdss.pkl', 'rb') as f:
                                 fromdss = pickle.load(f)
                             reconstructed_data = remove_comps_DSS(raw_data, len(esg_chans), n, todss, fromdss)
                             replace_kwargs = dict(
