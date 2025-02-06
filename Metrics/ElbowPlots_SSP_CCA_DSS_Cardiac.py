@@ -2,10 +2,11 @@
 # Checking for SSP, CCA cardiac and DSS cardiac
 
 
-import numpy as np
 import h5py
 import matplotlib.pyplot as plt
-from math import log
+from math import log10
+from kneed import KneeLocator
+import numpy as np
 import pandas as pd
 
 if __name__ == '__main__':
@@ -61,8 +62,13 @@ if __name__ == '__main__':
                 pow_med = infile[keywords[0]][()]
                 pow_tib = infile[keywords[1]][()]
 
-            inps_med.append(np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
-            inps_tib.append(np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
+            # shape (n_subjects, n_rel_ch) - average INPSR over relevant channels for each subject and then log convert
+            all_subj_inpsr_med = np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1)
+            all_subj_inpsr_tib = np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1)
+            log_inpsr_med = [log10(inps) for inps in all_subj_inpsr_med]
+            log_inpsr_tib = [log10(inps) for inps in all_subj_inpsr_tib]
+            inps_med.append(np.mean(log_inpsr_med))
+            inps_tib.append(np.mean(log_inpsr_tib))
 
         #######################################################################
         # RI
@@ -86,24 +92,29 @@ if __name__ == '__main__':
             residual_med.append((np.mean(res_med[:, median_pos] / res_med_prep[:, median_pos], axis=tuple([0, 1]))) * 100)
             residual_tib.append((np.mean(res_tib[:, tibial_pos] / res_tib_prep[:, tibial_pos], axis=tuple([0, 1]))) * 100)
 
-        inps_med_log = [log(inps) for inps in inps_med]
-        inps_tib_log = [log(inps) for inps in inps_tib]
-
         # Images
         fig, axes = plt.subplots(1, 3)
         axes = axes.flatten()
         plt.suptitle(f"{method}, median")
         axes[0].scatter(projectors, snr_med)
+        axes[0].axvline(list(snr_med).index(np.max(snr_med))+1, color='red', label=f"{list(snr_med).index(np.max(snr_med))+1}")
+        axes[0].legend()
         axes[0].set_xlabel('No. Projectors')
         axes[0].set_ylabel('Value')
         axes[0].set_title('SNR')
         axes[0].set_xticks(projectors)
         axes[1].scatter(projectors, residual_med)
+        kn = KneeLocator(projectors, residual_med, curve='convex', direction='decreasing')
+        axes[1].axvline(kn.knee, color='red', label=f"{kn.knee}")
+        axes[1].legend()
         axes[1].set_xlabel('No. Projectors')
         axes[1].set_ylabel('Value')
         axes[1].set_title('RI')
         axes[1].set_xticks(projectors)
-        axes[2].scatter(projectors, inps_med_log)
+        axes[2].scatter(projectors, inps_med)
+        kn = KneeLocator(projectors, inps_med, curve='concave', direction='increasing')
+        axes[2].axvline(kn.knee, color='red', label=f"{kn.knee}")
+        axes[2].legend()
         axes[2].set_xlabel('No. Projectors')
         axes[2].set_ylabel('Log Value')
         axes[2].set_title('INPSR')
@@ -114,19 +125,28 @@ if __name__ == '__main__':
         axes = axes.flatten()
         plt.suptitle(f"{method}, tibial")
         axes[0].scatter(projectors, snr_tib)
+        axes[0].axvline(list(snr_tib).index(np.max(snr_tib)) + 1, color='red', label=f"{list(snr_tib).index(np.max(snr_tib)) + 1}")
+        axes[0].legend()
         axes[0].set_xlabel('No. Projectors')
         axes[0].set_ylabel('Value')
         axes[0].set_title('SNR')
         axes[0].set_xticks(projectors)
         axes[1].scatter(projectors, residual_tib)
+        kn = KneeLocator(projectors, residual_tib, curve='convex', direction='decreasing')
+        axes[1].axvline(kn.knee, color='red', label=f"{kn.knee}")
+        axes[1].legend()
         axes[1].set_xlabel('No. Projectors')
         axes[1].set_ylabel('Value')
         axes[1].set_title('RI')
         axes[1].set_xticks(projectors)
-        axes[2].scatter(projectors, inps_tib_log)
+        axes[2].scatter(projectors, inps_tib)
+        kn = KneeLocator(projectors, inps_tib, curve='concave', direction='increasing')
+        axes[2].axvline(kn.knee, color='red', label=f"{kn.knee}")
+        axes[2].legend()
         axes[2].set_xlabel('No. Projectors')
         axes[2].set_ylabel('Log Value')
         axes[2].set_title('INPSR')
         axes[2].set_xticks(projectors)
+        plt.legend()
         plt.tight_layout()
         plt.show()

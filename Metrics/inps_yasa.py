@@ -6,6 +6,7 @@ import mne
 import yasa
 import h5py
 import pickle
+from math import log10
 from replace_data import replace_data
 from remove_components_CCA import remove_comps_CCA
 from remove_components_DSS import remove_comps_DSS
@@ -80,8 +81,8 @@ if __name__ == '__main__':
                     'ICA-Anterior': False,
                     'ICA-Separate': False,
                     'SSP': False,
-                    'CCA_heart': True,
-                    'DSS_heart': True}
+                    'CCA_heart': False,
+                    'DSS_heart': False}
 
     for i in np.arange(0, len(which_method)):
         method = list(which_method.keys())[i]
@@ -371,8 +372,15 @@ if __name__ == '__main__':
                     pow_med = infile[keywords[0]][()]
                     pow_tib = infile[keywords[1]][()]
 
-                inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
-                inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
+                # shape (n_subjects, n_rel_ch) - average INPSR over relevant channels for each subject and then log convert
+                all_subj_inpsr_med = np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1)
+                all_subj_inpsr_tib = np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1)
+                log_inpsr_med = [log10(inps) for inps in all_subj_inpsr_med]
+                log_inpsr_tib = [log10(inps) for inps in all_subj_inpsr_tib]
+                inps_med = np.mean(log_inpsr_med)
+                inps_tib = np.mean(log_inpsr_tib)
+                # inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
+                # inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
 
                 print(f"INPS {name} Median {n}: {inps_med:.4e}")
                 print(f"INPS {name} Tibial {n}: {inps_tib:.4e}")
@@ -389,8 +397,15 @@ if __name__ == '__main__':
                 # Get the data
                 pow_med = infile[keywords[0]][()]
                 pow_tib = infile[keywords[1]][()]
-            inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
-            inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
+
+            all_subj_inpsr_med = np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1)
+            all_subj_inpsr_tib = np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1)
+            log_inpsr_med = [log10(inps) for inps in all_subj_inpsr_med]
+            log_inpsr_tib = [log10(inps) for inps in all_subj_inpsr_tib]
+            inps_med = np.mean(log_inpsr_med)
+            inps_tib = np.mean(log_inpsr_tib)
+            # inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
+            # inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
 
             print(f'INPS {name} Median: {inps_med:.4e}')
             print(f'INPS {name} Tibial: {inps_tib:.4e}')

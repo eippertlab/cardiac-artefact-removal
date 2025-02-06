@@ -5,6 +5,7 @@ import numpy as np
 import h5py
 import pandas as pd
 from scipy.stats import sem
+from math import log10
 
 if __name__ == '__main__':
     excel_parent = '/data/pt_02569/ResultsComparison/'
@@ -37,7 +38,7 @@ if __name__ == '__main__':
                    'DSS_heart': "/data/pt_02569/tmp_data/dss_heartart_py/"
                    }
 
-    print("\n")
+    print("Signal-to-Noise Ratio\n")
     for i in np.arange(0, len(input_paths)):
         name = list(input_paths.keys())[i]
         input_path = input_paths[name]
@@ -111,10 +112,18 @@ if __name__ == '__main__':
                     pow_med = infile[keywords[0]][()]
                     pow_tib = infile[keywords[1]][()]
 
-                inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
-                inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
-                inps_med_sem = sem(np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1), axis=0, nan_policy='omit')
-                inps_tib_sem = sem(np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1), axis=0, nan_policy='omit')
+                all_subj_inpsr_med = np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1)
+                all_subj_inpsr_tib = np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1)
+                log_inpsr_med = [log10(inps) for inps in all_subj_inpsr_med]
+                log_inpsr_tib = [log10(inps) for inps in all_subj_inpsr_tib]
+                inps_med = np.mean(log_inpsr_med)
+                inps_tib = np.mean(log_inpsr_tib)
+                inps_med_sem = sem(log_inpsr_med, axis=0, nan_policy='omit')
+                inps_tib_sem = sem(log_inpsr_tib, axis=0, nan_policy='omit')
+                # inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
+                # inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
+                # inps_med_sem = sem(np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1), axis=0, nan_policy='omit')
+                # inps_tib_sem = sem(np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1), axis=0, nan_policy='omit')
 
                 df_inpsr.at[f'{name}{n}', 'INPS Median, mean'] = inps_med
                 df_inpsr.at[f'{name}{n}', 'INPS Median, sem'] = inps_med_sem
@@ -127,12 +136,21 @@ if __name__ == '__main__':
                 # Get the data
                 pow_med = infile[keywords[0]][()]
                 pow_tib = infile[keywords[1]][()]
-            inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
-            inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
-            inps_med_sem = sem(np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1), axis=0,
-                               nan_policy='omit')
-            inps_tib_sem = sem(np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1), axis=0,
-                               nan_policy='omit')
+
+            all_subj_inpsr_med = np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1)
+            all_subj_inpsr_tib = np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1)
+            log_inpsr_med = [log10(inps) for inps in all_subj_inpsr_med]
+            log_inpsr_tib = [log10(inps) for inps in all_subj_inpsr_tib]
+            inps_med = np.mean(log_inpsr_med)
+            inps_tib = np.mean(log_inpsr_tib)
+            inps_med_sem = sem(log_inpsr_med, axis=0, nan_policy='omit')
+            inps_tib_sem = sem(log_inpsr_tib, axis=0, nan_policy='omit')
+            # inps_med = (np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=tuple([0, 1])))
+            # inps_tib = (np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=tuple([0, 1])))
+            # inps_med_sem = sem(np.mean(pow_med_prep[:, median_pos] / pow_med[:, median_pos], axis=1), axis=0,
+            #                    nan_policy='omit')
+            # inps_tib_sem = sem(np.mean(pow_tib_prep[:, tibial_pos] / pow_tib[:, tibial_pos], axis=1), axis=0,
+            #                    nan_policy='omit')
 
             df_inpsr.at[f'{name}', 'INPS Median, mean'] = inps_med
             df_inpsr.at[f'{name}', 'INPS Median, sem'] = inps_med_sem
