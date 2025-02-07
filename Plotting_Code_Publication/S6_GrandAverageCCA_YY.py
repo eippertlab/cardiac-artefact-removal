@@ -85,199 +85,212 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    image_path = "/data/p_02569/Images/GrandAverageYY_Dataset1/"
+    image_path = "/data/p_02569/Images/GrandAverageYY_CCA_DSS_Dataset1/"
     os.makedirs(image_path, exist_ok=True)
 
-    xls = pd.ExcelFile('/data/p_02569/Components.xls')
-    df = pd.read_excel(xls, 'Dataset 1')
-    df.set_index('Subject', inplace=True)
+    for data_type in ['DSS', 'CCA']:
+        if data_type == 'CCA':
+            xls = pd.ExcelFile('/data/p_02569/Components_CCA.xls')
+            df = pd.read_excel(xls, 'Dataset 1')
+            df.set_index('Subject', inplace=True)
+        elif data_type == 'DSS':
+            xls = pd.ExcelFile('/data/p_02569/Components_DSS.xls')
+            df = pd.read_excel(xls, 'Dataset 1')
+            df.set_index('Subject', inplace=True)
 
-    trials = [True, False, True, False]
-    time = [False, True, True, False]
+        trials = [True, False, True, False]
+        time = [False, True, True, False]
 
-    for reduced_trials, shorter_timescale in zip(trials, time):
-        for cond_name in cond_names:  # Conditions (median, tibial)
-            evoked_list_prep = []
-            evoked_list_prep_cca = []
-            evoked_list_pca_cca = []
-            evoked_list_ssp6_cca = []
+        for reduced_trials, shorter_timescale in zip(trials, time):
+            for cond_name in cond_names:  # Conditions (median, tibial)
+                evoked_list_prep = []
+                evoked_list_prep_cca = []
+                evoked_list_ica_cca = []
+                evoked_list_ssp5_cca = []
 
-            if cond_name == 'tibial':
-                trigger_name = 'Tibial - Stimulation'
-                spinal_channel = 'L1'
+                if cond_name == 'tibial':
+                    trigger_name = 'Tibial - Stimulation'
+                    spinal_channel = 'L1'
 
-            elif cond_name == 'median':
-                trigger_name = 'Median - Stimulation'
-                spinal_channel = 'SC6'
+                elif cond_name == 'median':
+                    trigger_name = 'Median - Stimulation'
+                    spinal_channel = 'SC6'
 
-            for subject in subjects:  # All subjects
-                subject_id = f'sub-{str(subject).zfill(3)}'
+                for subject in subjects:  # All subjects
+                    subject_id = f'sub-{str(subject).zfill(3)}'
 
-                ################################################################################
-                # Fully Uncleaned
-                ################################################################################
-                input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + '/'
-                fname = f"epochs_{cond_name}.fif"
-                epochs = mne.read_epochs(input_path + fname, preload=True)
-                if reduced_trials:
-                    epochs = epochs[0::4]
-                epochs = epochs.pick_channels([spinal_channel])
-                evoked = epochs.average()
-                evoked_list_prep.append(evoked)
+                    ################################################################################
+                    # Fully Uncleaned
+                    ################################################################################
+                    input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + '/'
+                    fname = f"epochs_{cond_name}.fif"
+                    epochs = mne.read_epochs(input_path + fname, preload=True)
+                    if reduced_trials:
+                        epochs = epochs[0::4]
+                    epochs = epochs.pick_channels([spinal_channel])
+                    evoked = epochs.average()
+                    evoked_list_prep.append(evoked)
 
-                ################################################################################
-                # Uncleaned CCA
-                ###############################################################################
-                input_path = "/data/pt_02569/tmp_data/prepared_py_cca/" + subject_id + '/'
-                epochs = mne.read_epochs(f"{input_path}noStimart_sr{sampling_rate}_{cond_name}_withqrs.fif"
-                                         , preload=True)
-                channel = df.loc[subject_id, f"Prep_{cond_name}"]
-                inv = df.loc[subject_id, f"Prep_{cond_name}_inv"]
-                if inv == 'inv' or inv == '!inv':
-                    epochs.apply_function(invert, picks=channel)
-                if reduced_trials:
-                    epochs = epochs[0::4]
-                epochs = epochs.pick_channels([channel])
-                evoked = epochs.average()
-                data = evoked.data
-                evoked_list_prep_cca.append(data)
+                    ################################################################################
+                    # Uncleaned CCA + DSS
+                    ###############################################################################
+                    if data_type == 'CCA':
+                        input_path = "/data/pt_02569/tmp_data/prepared_py_cca/" + subject_id + '/'
+                    elif data_type == 'DSS':
+                        input_path = "/data/pt_02569/tmp_data/prepared_py_dss/" + subject_id + '/'
+                    epochs = mne.read_epochs(f"{input_path}noStimart_sr{sampling_rate}_{cond_name}_withqrs.fif"
+                                             , preload=True)
+                    channel = df.loc[subject_id, f"Prep_{cond_name}"]
+                    inv = df.loc[subject_id, f"Prep_{cond_name}_inv"]
+                    if inv == 'inv':
+                        epochs.apply_function(invert, picks=channel)
+                    if reduced_trials:
+                        epochs = epochs[0::4]
+                    epochs = epochs.pick_channels([channel])
+                    evoked = epochs.average()
+                    data = evoked.data
+                    evoked_list_prep_cca.append(data)
 
-                ##############################################################################
-                # PCA_OBS
-                ##############################################################################
-                input_path = "/data/pt_02569/tmp_data/ecg_rm_py_cca/" + subject_id + '/'
-                fname = f"data_clean_ecg_spinal_{cond_name}_withqrs.fif"
-                epochs = mne.read_epochs(input_path + fname, preload=True)
-                channel = df.loc[subject_id, f"PCA_{cond_name}"]
-                inv = df.loc[subject_id, f"PCA_{cond_name}_inv"]
-                if inv == 'inv' or inv == '!inv':
-                    epochs.apply_function(invert, picks=channel)
-                if reduced_trials:
-                    epochs = epochs[0::4]
-                epochs = epochs.pick_channels([channel])
-                evoked = epochs.average()
-                data = evoked.data
-                evoked_list_pca_cca.append(data)
+                    ##############################################################################
+                    # ICA CCA + DSS
+                    ##############################################################################
+                    if data_type == 'CCA':
+                        input_path = "/data/pt_02569/tmp_data/baseline_ica_py_cca/" + subject_id + '/'
+                    elif data_type == 'DSS':
+                        input_path = "/data/pt_02569/tmp_data/baseline_ica_py_dss/" + subject_id + '/'
+                    fname = f"clean_baseline_ica_auto_{cond_name}.fif"
+                    epochs = mne.read_epochs(input_path + fname, preload=True)
+                    channel = df.loc[subject_id, f"ICA_{cond_name}"]
+                    inv = df.loc[subject_id, f"ICA_{cond_name}_inv"]
+                    if inv == 'inv':
+                        epochs.apply_function(invert, picks=channel)
+                    if reduced_trials:
+                        epochs = epochs[0::4]
+                    epochs = epochs.pick_channels([channel])
+                    evoked = epochs.average()
+                    data = evoked.data
+                    evoked_list_ica_cca.append(data)
 
-                #############################################################################
-                # SSP 6
-                #############################################################################
-                input_path = f"/data/pt_02569/tmp_data/ssp_py_cca/{subject_id}/6 projections/"
-                epochs = mne.read_epochs(f"{input_path}ssp_cleaned_{cond_name}.fif", preload=True)
-                channel = df.loc[subject_id, f"SSP6_{cond_name}"]
-                inv = df.loc[subject_id, f"SSP6_{cond_name}_inv"]
-                if inv == 'inv' or inv == '!inv':
-                    epochs.apply_function(invert, picks=channel)
-                if reduced_trials:
-                    epochs = epochs[0::4]
-                epochs = epochs.pick_channels([channel])
-                evoked = epochs.average()
-                data = evoked.data
-                evoked_list_ssp6_cca.append(data)
+                    #############################################################################
+                    # SSP 5 CCA + DSS
+                    #############################################################################
+                    if data_type == 'CCA':
+                        input_path = f"/data/pt_02569/tmp_data/ssp_py_cca/{subject_id}/5 projections/"
+                    elif data_type == 'DSS':
+                        input_path = f"/data/pt_02569/tmp_data/ssp_py_dss/{subject_id}/5 projections/"
+                    epochs = mne.read_epochs(f"{input_path}ssp_cleaned_{cond_name}.fif", preload=True)
+                    channel = df.loc[subject_id, f"SSP5_{cond_name}"]
+                    inv = df.loc[subject_id, f"SSP5_{cond_name}_inv"]
+                    if inv == 'inv':
+                        epochs.apply_function(invert, picks=channel)
+                    if reduced_trials:
+                        epochs = epochs[0::4]
+                    epochs = epochs.pick_channels([channel])
+                    evoked = epochs.average()
+                    data = evoked.data
+                    evoked_list_ssp5_cca.append(data)
 
-            #################################################################################
-            # Get grand averages
-            #################################################################################
-            # Can't use MNE grand average cause they don't have the same channels for CCA data
-            relevant_channel_prep = mne.grand_average(evoked_list_prep, interpolate_bads=False, drop_bads=False)
+                #################################################################################
+                # Get grand averages
+                #################################################################################
+                # Can't use MNE grand average cause they don't have the same channels for CCA data
+                relevant_channel_prep = mne.grand_average(evoked_list_prep, interpolate_bads=False, drop_bads=False)
 
-            relevant_channel_prep_cca = np.mean(evoked_list_prep_cca, axis=0)
+                relevant_channel_prep_cca = np.mean(evoked_list_prep_cca, axis=0)
 
-            relevant_channel_pca_cca = np.mean(evoked_list_pca_cca, axis=0)
+                relevant_channel_ica_cca = np.mean(evoked_list_ica_cca, axis=0)
 
-            relevant_channel_ssp6_cca = np.mean(evoked_list_ssp6_cca, axis=0)
+                relevant_channel_ssp5_cca = np.mean(evoked_list_ssp5_cca, axis=0)
 
-            # Want 1 row, 3 column subplot
-            # Want left y-axis to relate to cleaned heart artefact
-            # Want right y-axis to relate to uncleaned heart artefact
-            fig, [ax1, ax2, ax3] = plt.subplots(1, 3, figsize=[18, 6])
-            ax10 = ax1.twinx()
-            ax20 = ax2.twinx()
-            ax30 = ax3.twinx()
-            ax1.get_shared_y_axes().join(ax1, ax2, ax3)  # Tie primary axes
-            # ax2.get_shared_y_axes().join(ax2, ax3)
-            ax10.get_shared_y_axes().join(ax10, ax20, ax30)  # Tie secondary axes
+                # Want 1 row, 3 column subplot
+                # Want left y-axis to relate to cleaned heart artefact
+                # Want right y-axis to relate to uncleaned heart artefact
+                fig, [ax1, ax2, ax3] = plt.subplots(1, 3, figsize=[18, 6])
+                ax10 = ax1.twinx()
+                ax20 = ax2.twinx()
+                ax30 = ax3.twinx()
+                ax1.get_shared_y_axes().join(ax1, ax2, ax3)  # Tie primary axes
+                ax10.get_shared_y_axes().join(ax10, ax20, ax30)  # Tie secondary axes
 
-            # Uncleaned
-            ax1.plot(epochs.times, relevant_channel_prep_cca[0, :], label='Uncleaned CCA',
-                     color=pal[0])
-            ax1.set_ylabel('Cleaned SEP Amplitude (AU)')
-            ax1.set_xlabel('Time (s)')
-            if cond_name == 'median':
-                ax1.set_title('Uncleaned + CCA')
-            # ax1.spines['left'].set_color('teal')
-            # ax1.tick_params(axis='y', colors='teal')
-            ax10.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6, label='Uncleaned',
-                      linewidth=0.5, linestyle='dashed', color='black')
-            ax10.set_yticklabels([])
+                # Uncleaned
+                if data_type == 'CCA':
+                    ax1.plot(relevant_channel_prep.times[:-1], relevant_channel_prep_cca[0, :],
+                             color=pal[0])
+                elif data_type == 'DSS':
+                    ax1.plot(relevant_channel_prep.times, relevant_channel_prep_cca[0, :],
+                             color=pal[0])
+                ax1.set_ylabel('Cleaned SEP Amplitude (AU)')
+                ax1.set_xlabel('Time (s)')
+                if cond_name == 'median':
+                    ax1.set_title(f'Uncleaned + {data_type}')
+                ax10.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6,
+                          linewidth=0.5, linestyle='dashed', color='black')
+                ax10.set_yticklabels([])
 
-            # PCA
-            ax2.plot(epochs.times, relevant_channel_pca_cca[0, :], label='PCA-OBS CCA',
-                     color=pal[1])
-            ax2.set_xlabel('Time (s)')
-            if cond_name == 'median':
-                ax2.set_title('PCA-OBS + CCA')
-            ax2.set_yticklabels([])
-            # ax2.spines['left'].set_color('blue')
-            # ax2.tick_params(axis='y', colors='blue')
-            ax20.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6, label='Uncleaned',
-                      linewidth=0.5, linestyle='dashed', color='black')
-            ax20.set_yticklabels([])
+                # ICA
+                if data_type == 'CCA':
+                    ax2.plot(relevant_channel_prep.times[:-1], relevant_channel_ica_cca[0, :],
+                             color=pal[2])
+                elif data_type == 'DSS':
+                    ax2.plot(relevant_channel_prep.times, relevant_channel_ica_cca[0, :],
+                             color=pal[2])
+                ax2.set_xlabel('Time (s)')
+                if cond_name == 'median':
+                    ax2.set_title(f'ICA + {data_type}')
+                ax2.set_yticklabels([])
+                ax20.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6,
+                          linewidth=0.5, linestyle='dashed', color='black')
+                ax20.set_yticklabels([])
 
-            # SSP6
-            ax3.plot(epochs.times, relevant_channel_ssp6_cca[0, :], label='SSP CCA',
-                     color=pal[3])
-            ax3.set_xlabel('Time (s)')
-            if cond_name == 'median':
-                ax3.set_title('SSP + CCA')
-            ax3.set_yticklabels([])
-            ax30.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6, label='Uncleaned',
-                      linewidth=0.5, linestyle='dashed', color='black')
-            ax30.set_ylabel('Uncleaned SEP Amplitude (\u03BCV)')
-            # ax3.spines['left'].set_color('magenta')
-            # ax3.tick_params(axis='y', colors='magenta')
+                # SSP6
+                if data_type == 'CCA':
+                    ax3.plot(relevant_channel_prep.times[:-1], relevant_channel_ssp5_cca[0, :],
+                             color=pal[3])
+                elif data_type == 'DSS':
+                    ax3.plot(relevant_channel_prep.times, relevant_channel_ssp5_cca[0, :],
+                             color=pal[3])
+                ax3.set_xlabel('Time (s)')
+                if cond_name == 'median':
+                    ax3.set_title(f'SSP + {data_type}')
+                ax3.set_yticklabels([])
+                ax30.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6,
+                          linewidth=0.5, linestyle='dashed', color='black')
+                ax30.set_ylabel('Uncleaned SEP Amplitude (\u03BCV)')
 
-            # Add vertical line at expected latency
-            if cond_name == 'tibial':
-                ax1.axvline(x=22 / 1000, color='k', linewidth=0.7, label='22ms')
-                ax2.axvline(x=22 / 1000, color='k', linewidth=0.7, label='22ms')
-                ax3.axvline(x=22 / 1000, color='k', linewidth=0.7, label='22ms')
+                # Add vertical line at expected latency
+                if cond_name == 'tibial':
+                    ax1.axvline(x=22 / 1000, color='k', linewidth=0.7, label='22ms')
+                    ax2.axvline(x=22 / 1000, color='k', linewidth=0.7, label='22ms')
+                    ax3.axvline(x=22 / 1000, color='k', linewidth=0.7, label='22ms')
 
-            elif cond_name == 'median':
-                ax1.axvline(x=13 / 1000, color='k', linewidth=0.7, label='13ms')
-                ax2.axvline(x=13 / 1000, color='k', linewidth=0.7, label='13ms')
-                ax3.axvline(x=13 / 1000, color='k', linewidth=0.7, label='13ms')
+                elif cond_name == 'median':
+                    ax1.axvline(x=13 / 1000, color='k', linewidth=0.7, label='13ms')
+                    ax2.axvline(x=13 / 1000, color='k', linewidth=0.7, label='13ms')
+                    ax3.axvline(x=13 / 1000, color='k', linewidth=0.7, label='13ms')
 
-            if shorter_timescale:
-                ax1.set_xlim([-25 / 1000, 65 / 1000])
-                ax2.set_xlim([-25 / 1000, 65 / 1000])
-                ax3.set_xlim([-25 / 1000, 65 / 1000])
-            else:
-                ax1.set_xlim([-100/1000, 300/1000])
-                ax2.set_xlim([-100/1000, 300/1000])
-                ax3.set_xlim([-100/1000, 300/1000])
+                if shorter_timescale:
+                    ax1.set_xlim([-25 / 1000, 65 / 1000])
+                    ax2.set_xlim([-25 / 1000, 65 / 1000])
+                    ax3.set_xlim([-25 / 1000, 65 / 1000])
+                else:
+                    ax1.set_xlim([-100/1000, 300/1000])
+                    ax2.set_xlim([-100/1000, 300/1000])
+                    ax3.set_xlim([-100/1000, 300/1000])
 
-            if reduced_trials and shorter_timescale:
-                fname = f"CCA_SEPTimeCourse_{cond_name}_reducedtrials_shorter"
-            elif reduced_trials and not shorter_timescale:
-                fname = f"CCA_SEPTimeCourse_{cond_name}_reducedtrials"
-            elif shorter_timescale and not reduced_trials:
-                fname = f"CCA_SEPTimeCourse_{cond_name}_shorter"
-            else:
-                fname = f"CCA_SEPTimeCourse_{cond_name}"
+                if reduced_trials and shorter_timescale:
+                    fname = f"{data_type}_SEPTimeCourse_{cond_name}_reducedtrials_shorter"
+                elif reduced_trials and not shorter_timescale:
+                    fname = f"{data_type}_SEPTimeCourse_{cond_name}_reducedtrials"
+                elif shorter_timescale and not reduced_trials:
+                    fname = f"{data_type}_SEPTimeCourse_{cond_name}_shorter"
+                else:
+                    fname = f"{data_type}_SEPTimeCourse_{cond_name}"
 
-            # # Align y-axes
-            align_yaxis_np([ax1, ax10, ax2, ax20, ax3, ax30])
+                # # Align y-axes
+                align_yaxis_np([ax1, ax10, ax2, ax20, ax3, ax30])
 
-            # if cond_name == 'median':
-            #     plt.suptitle(f"SEP Time Courses\n"
-            #                  f"Cervical Spinal Cord")
-            # else:
-            #     plt.suptitle(f"SEP Time Courses\n"
-            #                  f"Lumbar Spinal Cord")
-
-            plt.tight_layout()
-            # plt.show()
-            # exit()
-            plt.savefig(image_path+fname+'.png')
-            plt.savefig(image_path+fname+'.pdf', bbox_inches='tight', format="pdf")
+                plt.tight_layout()
+                # plt.show()
+                # exit()
+                plt.savefig(image_path+fname+'.png')
+                plt.savefig(image_path+fname+'.pdf', bbox_inches='tight', format="pdf")

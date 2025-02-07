@@ -30,8 +30,8 @@ esg_bp_freq = cfg['esg_bp_freq'][0]
 image_path = "/data/p_02569/Images/PCA_tukey_comparison_images/"
 os.makedirs(image_path, exist_ok=True)
 
-tmin = 784
-tmax = 785
+tmin = 760.5
+tmax = 761.5
 
 for subject in subjects:
     subject_id = f'sub-{str(subject).zfill(3)}'
@@ -83,10 +83,11 @@ for subject in subjects:
         ################################################################################
         raw = raw.crop(tmin=tmin, tmax=tmax)
         events, event_ids = mne.events_from_annotations(raw)
-        trigger_name = ['fit_end', 'fit_start', 'qrs']
+        trigger_name = ['fit_end', 'fit_start', 'qrs', 'Tibial - Stimulation']
         event_id_dict = {key: value for key, value in event_ids.items() if key in trigger_name}
         event_times = events[:, 0]/1000
         event_labels = []
+        # Gets all event labels in zone of interest
         for value in events[:, 2]:
             event_labels.append([k for k, v in event_id_dict.items() if v == value][0])
 
@@ -120,7 +121,7 @@ for subject in subjects:
         plt.title(f'Effect of a Tukey Window\n'
                   f'Participant {subject}, {full_name}')
 
-        plt.legend()
+        plt.legend(loc='lower right')
         # Add scale bar class
         class AnchoredHScaleBar(matplotlib.offsetbox.AnchoredOffsetbox):
             """ size: length of bar in data units
