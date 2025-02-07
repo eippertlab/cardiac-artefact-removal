@@ -135,3 +135,43 @@ def calculate_SNR_evoked(evoked, cond_name, iv_baseline, reduced_window):
     return snr, peak_channel
 
 
+# Takes an evoked response and calculates the SNR
+def calculate_SNR_evoked_ccadss(evoked, cond_name, iv_baseline, ch):
+    # Want to only check channels relevant to potential being triggered
+    # Tibial centred around 22ms - take 10ms on either end
+    # Median centred around 13ms - take 5ms on either end
+    # Also option to use a reduced time window on either side of expected latency
+    if cond_name == 'tibial':
+        start = 12 / 1000
+        end = 32 / 1000
+
+    elif cond_name == 'median':
+        start = 8 / 1000
+        end = 18 / 1000
+
+    evoked_channel = evoked.copy().pick_channels([ch])
+
+    # Extract relevant data in time of interest - to check if we even have negative value here
+    time_idx = evoked_channel.time_as_index([start, end])
+    data = evoked_channel.data[0, time_idx[0]:time_idx[1]]
+
+    # Check data in channel actually has neg values - Extract negative peaks
+    if np.any(data < 0):
+        _, _, amplitude = evoked_channel.get_peak(ch_type=None, tmin=start, tmax=end, mode='neg',
+                                                        time_as_index=False, merge_grads=False,
+                                                        return_amplitude=True)
+        # Now get the std in the baseline period of the selected channel
+        iv_baseline_idx = evoked_channel.time_as_index([iv_baseline[0], iv_baseline[1]])
+        base = evoked_channel.data[0, iv_baseline_idx[0]:iv_baseline_idx[1]]  # only one channel, baseline time period
+        stan_dev = np.std(base, axis=0)
+
+        # Compute and save snr
+        snr = abs(amplitude) / abs(stan_dev)
+
+    # If there are no negative values, insert dummys
+    else:
+        snr = np.nan
+
+    return snr
+
+
