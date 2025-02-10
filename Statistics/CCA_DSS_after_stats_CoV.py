@@ -1,35 +1,42 @@
-# File to compute p-values via permutation t-testing for the SNR results
+# File to compute p-values via permutation t-testing for the CCA and DSS CoV results
 
 import mne
 import pandas as pd
 import numpy as np
 import h5py
-from pingouin import rm_anova, ptests
 from itertools import combinations
+from pingouin import rm_anova
 import os
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
 
 if __name__ == '__main__':
+    data_type = 'DSS-SEP'  # CCA-SEP or DSS-SEP
+
     # Read in results files and format in a pandas dataframe
     # Set file locations
-    fname = 'snr.h5'
-    prep_path = '/data/pt_02569/tmp_data/prepared_py/'
-    pca_path = '/data/pt_02569/tmp_data/ecg_rm_py/'
-    ica_path = '/data/pt_02569/tmp_data/baseline_ica_py/'
-    ssp_path = '/data/pt_02569/tmp_data/ssp_py/'
-    ccaheart_path = '/data/pt_02569/tmp_data/cca_heartart_py/'
-    dssheart_path = '/data/pt_02569/tmp_data/dss_heartart_py/'
+    fname = 'variance.h5'
+
+    if data_type == 'CCA-SEP':
+        prep_path = '/data/pt_02569/tmp_data/prepared_py_cca/'
+        ica_path = '/data/pt_02569/tmp_data/baseline_ica_py_cca/'
+        ssp_path = '/data/pt_02569/tmp_data/ssp_py_cca/'
+
+    elif data_type == 'DSS-SEP':
+        prep_path = '/data/pt_02569/tmp_data/prepared_py_dss/'
+        ica_path = '/data/pt_02569/tmp_data/baseline_ica_py_dss/'
+        ssp_path = '/data/pt_02569/tmp_data/ssp_py_dss/'
 
     ################################# Make Dataframe ###################################
-    file_paths = [prep_path, pca_path, ica_path, ssp_path, ccaheart_path, dssheart_path]
-    names = ['Prep', 'PCA', 'ICA', 'SSP', 'CCA-heart', 'DSS-heart']
+    file_paths = [prep_path, ica_path, ssp_path]
+    names = ['Prep', 'ICA', 'SSP']
+
     # Pull each subjects value out
-    keywords = ['snr_med', 'snr_tib']
+    keywords = ['var_med', 'var_tib']
     count = 0
     for file_path in file_paths:
-        with h5py.File(file_path+fname, "r") as infile:
+        with h5py.File(file_path + fname, "r") as infile:
             if file_path == prep_path:
                 snr_med = infile[keywords[0]][()].reshape(-1)
                 data_med = {'Prep': snr_med}
@@ -38,24 +45,6 @@ if __name__ == '__main__':
                 snr_tib = infile[keywords[1]][()].reshape(-1)
                 data_tib = {'Prep': snr_tib}
                 df_tib = pd.DataFrame(data_tib, index=np.arange(1, 37))
-
-            elif file_path in [ssp_path, ccaheart_path, dssheart_path]:
-                # These have shape (n_subjects, n_projectors) - need to select correct no. of projectors
-                snr_med = infile[keywords[0]][()]
-                if file_path == ssp_path:
-                    df_med[f'{names[count]}'] = snr_med[:, 4]
-                    snr_tib = infile[keywords[1]][()]
-                    df_tib[f'{names[count]}'] = snr_tib[:, 4]
-
-                elif file_path == ccaheart_path:
-                    df_med[f'{names[count]}'] = snr_med[:, 8]
-                    snr_tib = infile[keywords[1]][()]
-                    df_tib[f'{names[count]}'] = snr_tib[:, 5]
-
-                elif file_path == dssheart_path:
-                    df_med[f'{names[count]}'] = snr_med[:, 8]
-                    snr_tib = infile[keywords[1]][()]
-                    df_tib[f'{names[count]}'] = snr_tib[:, 6]
 
             else:
                 # Get the data

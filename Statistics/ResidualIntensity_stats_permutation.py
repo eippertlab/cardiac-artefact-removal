@@ -3,9 +3,11 @@
 import mne
 import pandas as pd
 import numpy as np
+from pingouin import rm_anova
 import h5py
 from itertools import combinations
-import os
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
 
 
 if __name__ == '__main__':
@@ -16,8 +18,8 @@ if __name__ == '__main__':
     pca_path = '/data/pt_02569/tmp_data/ecg_rm_py/'
     ica_path = '/data/pt_02569/tmp_data/baseline_ica_py/'
     ssp_path = '/data/pt_02569/tmp_data/ssp_py/'
-    figure_path = '/data/p_02569/Images/StatsGraphs_Dataset1/'
-    os.makedirs(figure_path, exist_ok=True)
+    ccaheart_path = '/data/pt_02569/tmp_data/cca_heartart_py/'
+    dssheart_path = '/data/pt_02569/tmp_data/dss_heartart_py/'
 
     ################################# Make Dataframe ###################################
     # Necessary information to get relavant channel data
@@ -36,69 +38,65 @@ if __name__ == '__main__':
 
     ################################# Make Dataframe ###################################
     # Set up dataframe for stats
-    file_paths = [prep_path, pca_path, ica_path, ssp_path]
-    names = ['Prep', 'PCA', 'ICA', 'SSP_5', 'SSP_6']  # To make dataframe
-    names_indf = ['PCA', 'ICA', 'SSP_5', 'SSP_6']  # To access columns in df
+    file_paths = [prep_path, pca_path, ica_path, ssp_path, ccaheart_path, dssheart_path]
+    names = ['Prep', 'PCA', 'ICA', 'SSP', 'CCA-heart', 'DSS-heart']
     # Pull each subjects value out
     keywords = ['res_med', 'res_tib']
     count = 0
     for file_path in file_paths:
         if file_path == ssp_path:
-            fname = 'res_5.h5'
+            fname_med = 'res_5.h5'
+            fname_tib = 'res_5.h5'
+        elif file_path == ccaheart_path:
+            fname_med = 'res_9.h5'
+            fname_tib = 'res_6.h5'
+        elif file_path == dssheart_path:
+            fname_med = 'res_9.h5'
+            fname_tib = 'res_7.h5'
+        else:
+            fname_med = 'res.h5'
+            fname_tib = 'res.h5'
 
         # Need the prep values to do all the divisions thereafter
-        with h5py.File(file_path + fname, "r") as infile:
-            if file_path == prep_path:  # Just extract values from file to use later
+        if file_path == prep_path:  # Just extract values from file to use later
+            with h5py.File(file_path + fname_med, "r") as infile:
                 val_prep_med = infile[keywords[0]][()]
+            with h5py.File(file_path + fname_tib, "r") as infile:
                 val_prep_tib = infile[keywords[1]][()]
 
-            elif file_path == pca_path:  # Start the dataframe
-                # Get the data
+        elif file_path == pca_path:  # Start the dataframe
+            # Get the data
+            with h5py.File(file_path + fname_med, "r") as infile:
                 val_med = infile[keywords[0]][()]
                 res_med_current = (np.mean(val_med[:, median_pos] / val_prep_med[:, median_pos],
                                            axis=1)) * 100
                 data_med = {'PCA': res_med_current}
                 df_med = pd.DataFrame(data_med, index=np.arange(1, 37))
 
+            with h5py.File(file_path + fname_tib, "r") as infile:
                 val_tib = infile[keywords[1]][()]
                 res_tib_current = (np.mean(val_tib[:, tibial_pos] / val_prep_tib[:, tibial_pos],
                                            axis=1)) * 100
                 data_tib = {'PCA': res_tib_current}
                 df_tib = pd.DataFrame(data_tib, index=np.arange(1, 37))
 
-            else:
-                # Get the data
+        else:
+            with h5py.File(file_path + fname_med, "r") as infile:
                 val_med = infile[keywords[0]][()]
                 res_med_current = (np.mean(val_med[:, median_pos] / val_prep_med[:, median_pos],
                                            axis=1)) * 100
                 df_med[names[count]] = res_med_current
 
+            with h5py.File(file_path + fname_tib, "r") as infile:
                 val_tib = infile[keywords[1]][()]
                 res_tib_current = (np.mean(val_tib[:, tibial_pos] / val_prep_tib[:, tibial_pos],
                                            axis=1)) * 100
                 df_tib[names[count]] = res_tib_current
 
-            count += 1
-    # Then just add SSP 6 to the last column
-    fname = 'res_6.h5'
-    with h5py.File(ssp_path + fname, "r") as infile:
-        val_med = infile[keywords[0]][()]
-        res_med_current = (np.mean(val_med[:, median_pos] / val_prep_med[:, median_pos],
-                                   axis=1)) * 100
-        df_med['SSP_6'] = res_med_current
-
-        val_tib = infile[keywords[1]][()]
-        res_tib_current = (np.mean(val_tib[:, tibial_pos] / val_prep_tib[:, tibial_pos],
-                                   axis=1)) * 100
-        df_tib['SSP_6'] = res_tib_current
+        count += 1
 
 
     #################################### Dataframe of Differences #################################
-    # Drop SSP_5
-    df_med.drop('SSP_5', axis=1, inplace=True)
-    # Drop SSP_5
-    df_tib.drop('SSP_5', axis=1, inplace=True)
-
     ###################### Get mean and sem of columns ####################
     print('Median Means')
     print(df_med.mean())
@@ -109,28 +107,31 @@ if __name__ == '__main__':
     print('Tibial Standard Error')
     print(df_tib.sem())
 
-    ###################### Do median and tibial ##########################
-    for condition in ['median', 'tibial']:
-        if condition == 'median':
-            df = df_med.dropna()
-        elif condition == 'tibial':
-            df = df_tib.dropna()
+    # ANOVA test for median and tibial
+    for condition, df in zip(['median', 'tibial'], [df_med, df_tib]):
+        aov = df.rm_anova()
+        print('\n')
+        print(condition)
+        print(aov)
 
-        # for method in ['PCA']:
-        cc = list(combinations(df.columns, 2))  # All combinations
-        # cc = [el for el in cc if el[0] == method]
-        df_comb = pd.concat([df[c[1]].sub(df[c[0]]) for c in cc], axis=1, keys=cc)
-        df_comb.columns = pd.Series(cc).map('-'.join)
-        arr = df_comb.to_numpy()
-        print(df_comb.describe())
+        # If rm_anova was significant, perform post-hoc t-tests
+        if aov['p-unc'].loc[aov.index[0]] < 0.05:
+            ###################### Do median and tibial permutation statistics ##########################
+            df = df.dropna()
 
-        T_obs, p_values, H0 = mne.stats.permutation_t_test(arr, n_permutations=2000, n_jobs=36)
+            cc = list(combinations(df.columns, 2))  # All combinations
+            # cc = [el for el in cc if el[0] == method]  # Just ones with certain method in first position
+            df_comb = pd.concat([df[c[1]].sub(df[c[0]]) for c in cc], axis=1, keys=cc)
+            df_comb.columns = pd.Series(cc).map('-'.join)
+            arr = df_comb.to_numpy()
+            # print(df_comb.describe())
+            T_obs, p_values, H0 = mne.stats.permutation_t_test(arr, n_permutations=2000, n_jobs=36)
 
-        formatted_pvals = {}
-        colnames = df_comb.columns
-        for index in np.arange(0, len(p_values)):
-            formatted_pvals.update({colnames[index]: p_values[index]})
+            formatted_pvals = {}
+            colnames = df_comb.columns
+            for index in np.arange(0, len(p_values)):
+                formatted_pvals.update({colnames[index]: p_values[index]})
 
-        df_pvals = pd.DataFrame.from_dict(formatted_pvals, orient='index')
-        print(f"{condition} Corrected P-Values")
-        print(df_pvals)
+            df_pvals = pd.DataFrame.from_dict(formatted_pvals, orient='index')
+            print(f"{condition} Corrected P-Values")
+            print(df_pvals)
