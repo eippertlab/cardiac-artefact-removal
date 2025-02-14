@@ -115,13 +115,13 @@ if __name__ == '__main__':
                         if reduced_trials:
                             epochs = epochs[0::4]
                         if subj == 34:
-                            evoked = epochs.average().crop(tmin=time_point, tmax=time_point + (2 / 1000))
+                            evoked = epochs.average().crop(tmin=time_point - 1/1000, tmax=time_point + (2 / 1000))
                             data = evoked.data.mean(axis=1)
                             ch_idx = evoked.ch_names.index("S34")
                             data = np.insert(data, ch_idx, np.nan)
                             data_list.append(data)
                         else:
-                            evoked = epochs.average().crop(tmin=time_point, tmax=time_point + (2 / 1000))
+                            evoked = epochs.average().crop(tmin=time_point - 1/1000, tmax=time_point + (2 / 1000))
                             data = evoked.data.mean(axis=1)
                             data_list.append(data)
                         evoked_list.append(epochs.average())
@@ -133,13 +133,13 @@ if __name__ == '__main__':
                         if reduced_trials:
                             epochs = epochs[0::4]
                         if subj == 34:
-                            evoked = epochs.average().crop(tmin=time_point, tmax=time_point + (2 / 1000))
+                            evoked = epochs.average().crop(tmin=time_point-1/1000, tmax=time_point + (2 / 1000))
                             data = evoked.data.mean(axis=1)
                             ch_idx = evoked.ch_names.index("S34")
                             data = np.insert(data, ch_idx, np.nan)
                             data_list.append(data)
                         else:
-                            evoked = epochs.average().crop(tmin=time_point, tmax=time_point + (2 / 1000))
+                            evoked = epochs.average().crop(tmin=time_point-1/1000, tmax=time_point + (2 / 1000))
                             data = evoked.data.mean(axis=1)
                             data_list.append(data)
                         evoked_list.append(epochs.average())
@@ -166,7 +166,7 @@ if __name__ == '__main__':
                 if shorter_timescale:
                     axes[count_row, count_method].set_xlim([-0.025, 0.065])
                 else:
-                    axes[count_row, count_method].set_xlim([-0.1, 0.3])
+                    axes[count_row, count_method].set_xlim([-0.05, 0.15])
                 if cond_name == 'tibial':
                     axes[count_row, count_method].axvline(x=22 / 1000, color='r', linewidth=0.5, label='22ms')
                 elif cond_name == 'median':
@@ -196,8 +196,8 @@ if __name__ == '__main__':
                     tmin = -0.025
                     tmax = 0.065
                 else:
-                    tmin = -0.1
-                    tmax = 0.3
+                    tmin = -0.05
+                    tmax = 0.15
                 vmin = -380
                 vmax = -280
                 averaged = mne.grand_average(power_list, interpolate_bads=False, drop_bads=False)

@@ -164,4 +164,4 @@ def run_CCA_heart(subject, condition, srmr_nr, plot_images):
     # plt.show()
 
 if __name__ == '__main__':
-    run_CCA_heart(1, 2, 1, no_exclude_comps=6)
+    run_CCA_heart(1, 2, 1, True)
