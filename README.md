@@ -14,14 +14,17 @@ data as presented in the above-mentioned manuscript.
 ### Main Processing ###
 **main.py** is a wrapper script which can be used to detail the stages of analysis to run. These steps include:
 
-* Data Import (incl. downsampling, r-peak event annotation, stimulus artefact removal, file concatenation)
+* Data Import (incl. downsampling, r-peak event annotation, stimulus artefact removal, filtering, file concatenation)
 * Cardiac artefact removal via:
   * PCA_OBS (Principal Component Analysis Optimal Basis Sets)
   * ICA (Independent Components Analysis, including variants involving anteriorly re-referenced data and applying ICA
   separately to the lumbar and cervical spinal patch of electrodes)
   * SSP (Signal Space Projection with varying numbers of projectors)
+  * CCA (Canonical Correlation Analysis with varying numbers of components)
+  * DSS (Denoising Separation of Sources with varying numbers of components)
 * Signal enhancement analysis via:
   * CCA (Canonical Correlation Analysis)
+  * DSS (Denoising Separation of Sources)
 
 ### Metrics ###
 Scripts contained in **/Metrics** are used to compute the:
@@ -31,8 +34,8 @@ Scripts contained in **/Metrics** are used to compute the:
 * CoV (Coefficient of Variation)
 
 ### Statistics ###
-Scripts contained in **/Statistics** are used to determine statistical significance via one-sample permutation t-tests 
-for the SNR, RI, INPSR and CoV results.
+Scripts contained in **/Statistics** are used to determine statistical significance via repeated measures ANOVA
+and one-sample permutation t-tests for the SNR, RI, INPSR and CoV results.
 
 ### Plotting_Code_Publication ###
 Scripts contained in **/Plotting_Code_Publication** are used to generate all manuscript and supplement figures, 
