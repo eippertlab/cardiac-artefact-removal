@@ -15,6 +15,7 @@ from matplotlib.ticker import FormatStrFormatter, PercentFormatter
 from pycircstat.tests import rayleigh
 import seaborn as sns
 from statsmodels.stats.multitest import fdrcorrection
+from statsmodels.sandbox.stats.multicomp import multipletests
 
 
 if __name__ == '__main__':
@@ -48,7 +49,7 @@ if __name__ == '__main__':
         for subj in subjects:
             subject_id = f'sub-{str(subj).zfill(3)}'
 
-            input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id
+            input_path = "/data/pt_02569/tmp_data/prepared_py/" + subject_id + '/'
             raw = mne.io.read_raw_fif(f"{input_path}noStimart_sr1000_{cond_name}_withqrs.fif", preload=True)
 
             # Extract the stimulus event times
@@ -146,10 +147,12 @@ if __name__ == '__main__':
             # plt.show()
             # Add p_values to df
 
-        df[f"{cond_name}"] = p_values
-        hyp, corrected_p = fdrcorrection(df[f"{cond_name}"].values)
-        df_corrected[f"{cond_name}_pcorr"] = corrected_p
-        df_corrected[f"{cond_name}_reject"] = hyp
+        df[f"{cond_name}_uncorrpval"] = p_values
+        hyp, corrected_p = fdrcorrection(df[f"{cond_name}_uncorrpval"].values)
+        reject, p_bonf, _, _ = multipletests(df[f"{cond_name}_uncorrpval"].values, method='bonferroni')
+        df[f"{cond_name}_pcorr_fdr"] = corrected_p
+        df[f"{cond_name}_pcorr_bonf"] = p_bonf
+        # df[f"{cond_name}_reject"] = hyp
 
         if plot_images:
             if cond_name == 'median':
@@ -179,7 +182,7 @@ if __name__ == '__main__':
 
         pval, z = rayleigh(np.deg2rad(np.asarray(all_degrees)))
         print(pval)
-        input('Just want a pause (hit Enter):')
+        # input('Just want a pause (hit Enter):')
 
     print(df)
     print(df_corrected)
