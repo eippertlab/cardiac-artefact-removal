@@ -125,7 +125,7 @@ if __name__ == '__main__':
             df_comb.columns = pd.Series(cc).map('-'.join)
             arr = df_comb.to_numpy()
             # print(df_comb.describe())
-            T_obs, p_values, H0 = mne.stats.permutation_t_test(arr, n_permutations=2000, n_jobs=36)
+            T_obs, p_values, H0 = mne.stats.permutation_t_test(arr, n_permutations=10000, n_jobs=36)
 
             formatted_pvals = {}
             colnames = df_comb.columns

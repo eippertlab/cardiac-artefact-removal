@@ -41,18 +41,20 @@ if __name__ == '__main__':
 
             elif file_path in [ssp_path, ccaheart_path, dssheart_path]:
                 # These have shape (n_subjects, n_projectors) - need to select correct no. of projectors
-                snr_med = infile[keywords[0]][()]
                 if file_path == ssp_path:
+                    snr_med = infile[keywords[0]][()]
                     df_med[f'{names[count]}'] = snr_med[:, 4]
                     snr_tib = infile[keywords[1]][()]
                     df_tib[f'{names[count]}'] = snr_tib[:, 4]
 
                 elif file_path == ccaheart_path:
+                    snr_med = infile[keywords[0]][()]
                     df_med[f'{names[count]}'] = snr_med[:, 8]
                     snr_tib = infile[keywords[1]][()]
                     df_tib[f'{names[count]}'] = snr_tib[:, 5]
 
                 elif file_path == dssheart_path:
+                    snr_med = infile[keywords[0]][()]
                     df_med[f'{names[count]}'] = snr_med[:, 8]
                     snr_tib = infile[keywords[1]][()]
                     df_tib[f'{names[count]}'] = snr_tib[:, 6]
@@ -96,7 +98,7 @@ if __name__ == '__main__':
             df_comb.columns = pd.Series(cc).map('-'.join)
             arr = df_comb.to_numpy()
             # print(df_comb.describe())
-            T_obs, p_values, H0 = mne.stats.permutation_t_test(arr, n_permutations=2000, n_jobs=36)
+            T_obs, p_values, H0 = mne.stats.permutation_t_test(arr, n_permutations=10000, n_jobs=36)
 
             formatted_pvals = {}
             colnames = df_comb.columns

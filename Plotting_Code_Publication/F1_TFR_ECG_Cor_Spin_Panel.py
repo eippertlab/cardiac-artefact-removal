@@ -107,12 +107,7 @@ if __name__ == '__main__':
                 evoked_list.append(power)
 
             averaged = mne.grand_average(evoked_list, interpolate_bads=False, drop_bads=False)
-            # dict[f'{cond_name}, {channel_type}, min'] = 10*np.log10(averaged.data).min()  # Not working as expected
-            # dict[f'{cond_name}, {channel_type}, max'] = 10*np.log10(averaged.data).max()
-            # print(f"{channel_type} min: {10*np.log10(averaged.data).min()}")
-            # print(f"{channel_type} max: {10*np.log10(averaged.data).max()}")
             averaged_time = mne.grand_average(time_list, interpolate_bads=False, drop_bads=False)
-            # relevant_channel = averaged.pick_channels(channel)
 
             tmin = -0.2
             tmax = 0.4
@@ -127,9 +122,11 @@ if __name__ == '__main__':
                           tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
 
             # Time Plots
-            if channel_type in ['ECG', 'Spinal']:
+            if channel_type in ['ECG', 'Spinal', 'Cortical']:
                 if channel_type == 'ECG':
                     style = None
+                elif channel_type == 'Cortical':
+                    style= 'dotted'
                 else:
                     style = 'dashed'
                 ax_time.plot(evoked.times, averaged_time.get_data().reshape(-1)*10**6, color='black', linestyle=style)
