@@ -15,7 +15,7 @@ mpl.rcParams['pdf.fonttype'] = 42
 if __name__ == '__main__':
     #  First get the evoked list
     trigger_names = ['Tibial - Stimulation', 'Median - Stimulation']
-    save_path = '/data/p_02569/Images/SEP_Combined_D1V2/'
+    save_path = '/data/p_02569/Images/SEP_Combined_D1V2_Percent/'
     os.makedirs(save_path, exist_ok=True)
 
     methods = ['Uncleaned', 'PCA', 'ICA', 'SSP', 'CCA-cardiac', 'DSS-cardiac']
@@ -36,8 +36,8 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    trials = [False, True, False, True]
-    time = [False, True, True, False]
+    trials = [False]
+    time = [False]
 
     for reduced_trials, shorter_timescale in zip(trials, time):
         for trigger_name in trigger_names:
@@ -198,16 +198,21 @@ if __name__ == '__main__':
                 else:
                     tmin = -0.05
                     tmax = 0.15
-                vmin = -380
-                vmax = -280
+
+                if cond_name == 'median':
+                    vmin = -10
+                    vmax = 30
+                else:
+                    vmin = -5
+                    vmax = 15
                 averaged = mne.grand_average(power_list, interpolate_bads=False, drop_bads=False)
-                averaged.plot(channel, baseline=iv_baseline, mode='mean', cmap='jet',
-                              axes=axes[count_row, count_method], show=False, colorbar=False, dB=True,
+                averaged.plot(channel, baseline=iv_baseline, mode='percent', cmap='jet',
+                              axes=axes[count_row, count_method], show=False, colorbar=False, dB=False,
                               tmin=tmin, tmax=tmax, vmin=vmin, vmax=vmax)
                 if count_method != 0:
                     axes[count_row, count_method].set_ylabel(None)
                 cb = fig.colorbar(axes[count_row, count_method].images[-1], cax=axes[count_row, 6])
-                cb.set_label('Power (dB)')
+                cb.set_label('Change Relative to Baseline (%)')
                 count_row += 1
 
                 ##########################################################################################

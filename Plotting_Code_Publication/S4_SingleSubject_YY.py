@@ -68,7 +68,8 @@ def align_yaxis_np(axes):
 
 if __name__ == '__main__':
     pal = sns.color_palette(n_colors=10)
-    subjects = [10]
+    subjects = np.arange(1, 37)  # 1 through 36 to access subject data
+    # subjects = [10]
     cond_names = ['median', 'tibial']
     sampling_rate = 1000
 
@@ -86,8 +87,8 @@ if __name__ == '__main__':
     image_path = "/data/p_02569/Images/SingleSubjectYY_Dataset1/"
     os.makedirs(image_path, exist_ok=True)
 
-    trials = [False, True, False, True,]
-    time = [False, True, True, False]
+    trials = [False]  # , True, False, True
+    time = [False]  # , True, True, False
 
     for reduced_trials, shorter_timescale in zip(trials, time):
         for cond_name in cond_names:  # Conditions (median, tibial)
@@ -155,7 +156,7 @@ if __name__ == '__main__':
                     n = 9
                 elif cond_name == 'tibial':
                     n = 6
-                fname = f"epochs_{cond_name}_{n}_qrs.fif"
+                fname = f"epochs_{cond_name}_{n}.fif"
                 epochs = mne.read_epochs(input_path + fname, preload=True)
                 evoked_cca = epochs.average()
                 evoked_cca.reorder_channels(esg_chans)
@@ -168,7 +169,7 @@ if __name__ == '__main__':
                     n = 9
                 elif cond_name == 'tibial':
                     n = 7
-                fname = f"epochs_{cond_name}_{n}_qrs.fif"
+                fname = f"epochs_{cond_name}_{n}.fif"
                 epochs = mne.read_epochs(input_path + fname, preload=True)
                 evoked_dss = epochs.average()
                 evoked_dss.reorder_channels(esg_chans)
