@@ -32,86 +32,89 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    method = 'DSS'  # Can be CCA or DSS
-    image_path = f"/data/p_02569/Images/AverageGen_{method}_Dataset1/"
-    os.makedirs(image_path, exist_ok=True)
+    # method = 'DSS'  # Can be CCA or DSS
+    for method in ['CCA', 'DSS']:
+        image_path = f"/data/p_02569/Images/AverageGen_{method}_Dataset1/"
+        os.makedirs(image_path, exist_ok=True)
 
-    gen_images = True
-    gen_gif = True
+        gen_images = True
+        gen_gif = True
 
-    for cond_name in cond_names:  # Conditions (median, tibial)
-        evoked_list = []
+        for cond_name in cond_names:  # Conditions (median, tibial)
+            evoked_list = []
 
-        if cond_name == 'tibial':
-            trigger_name = 'qrs'
-            channel = 'L1'
+            if cond_name == 'tibial':
+                trigger_name = 'qrs'
+                channel = 'L1'
 
-        elif cond_name == 'median':
-            trigger_name = 'qrs'
-            channel = 'SC6'
+            elif cond_name == 'median':
+                trigger_name = 'qrs'
+                channel = 'SC6'
 
-        for subject in subjects:  # All subjects
-            subject_id = f'sub-{str(subject).zfill(3)}'
+            for subject in subjects:  # All subjects
+                subject_id = f'sub-{str(subject).zfill(3)}'
 
-            if gen_images:
-                if method == 'CCA':
-                    input_path = f"/data/pt_02569/tmp_data/cca_heartart_py/{subject_id}/"
-                    if cond_name == 'median':
-                        n = 9
-                    elif cond_name == 'tibial':
-                        n = 6
-                    fname = f"epochs_{cond_name}_{n}_qrs.fif"
-                    epochs = mne.read_epochs(input_path + fname, preload=True)
+                if gen_images:
+                    if method == 'CCA':
+                        input_path = f"/data/pt_02569/tmp_data/cca_heartart_py/{subject_id}/"
+                        if cond_name == 'median':
+                            n = 9
+                        elif cond_name == 'tibial':
+                            n = 6
+                        fname = f"epochs_{cond_name}_{n}_qrs.fif"
+                        epochs = mne.read_epochs(input_path + fname, preload=True)
 
-                elif method == 'DSS':
-                    input_path = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
-                    if cond_name == 'median':
-                        n = 9
-                    elif cond_name == 'tibial':
-                        n = 7
-                    fname = f"epochs_{cond_name}_{n}_qrs.fif"
-                    epochs = mne.read_epochs(input_path + fname, preload=True)
+                    elif method == 'DSS':
+                        input_path = f"/data/pt_02569/tmp_data/dss_heartart_py/{subject_id}/"
+                        if cond_name == 'median':
+                            n = 9
+                        elif cond_name == 'tibial':
+                            n = 7
+                        fname = f"epochs_{cond_name}_{n}_qrs.fif"
+                        epochs = mne.read_epochs(input_path + fname, preload=True)
 
-                evoked = epochs.average()
-                evoked.pick([channel])
-                evoked_list.append(evoked)
+                    evoked = epochs.average()
+                    evoked.pick([channel])
+                    evoked_list.append(evoked)
 
-                current_average = mne.grand_average(evoked_list, interpolate_bads=False, drop_bads=False)
+                    current_average = mne.grand_average(evoked_list, interpolate_bads=False, drop_bads=False)
 
-                # Subplot for both CCA and DSS - left side is always current subject, right side is building average
-                fig, axes = plt.subplots(1, 2, figsize=[12, 8])
-                axes[0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-                axes[0].plot(evoked.times, evoked.data[0, :] * 10 ** 6, color=pal[0])
-                axes[0].set_xlabel('Time (s)')
-                axes[0].set_ylabel('Amplitude (\u03BCV)')
-                axes[0].set_title(f'{subject_id}')
-                axes[0].set_xlim([-0.2, 0.4])
+                    # Subplot for both CCA and DSS - left side is always current subject, right side is building average
+                    fig, axes = plt.subplots(1, 2, figsize=[12, 8])
+                    axes[0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+                    axes[0].plot(evoked.times, evoked.data[0, :] * 10 ** 6, color=pal[0])
+                    axes[0].set_xlabel('Time (s)')
+                    axes[0].set_ylabel('Amplitude (\u03BCV)')
+                    axes[0].set_title(f'{subject_id}')
+                    axes[0].set_xlim([-0.2, 0.4])
 
-                axes[1].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-                axes[1].plot(current_average.times, current_average.data[0, :] * 10 ** 6, color=pal[2])
-                axes[1].set_xlabel('Time (s)')
-                axes[1].set_ylabel('Amplitude (\u03BCV)')
-                axes[1].set_title(f'n={len(evoked_list)}')
-                axes[1].set_xlim([-0.2, 0.4])
+                    axes[1].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+                    axes[1].plot(current_average.times, current_average.data[0, :] * 10 ** 6, color=pal[2])
+                    axes[1].set_xlabel('Time (s)')
+                    axes[1].set_ylabel('Amplitude (\u03BCV)')
+                    axes[1].set_title(f'n={len(evoked_list)}')
+                    axes[1].set_xlim([-0.2, 0.4])
 
-                fname = f"{cond_name}_{subject_id}.png"
-                plt.tight_layout()
-                plt.savefig(image_path+fname)
+                    plt.suptitle(f"{method}-cardiac, {cond_name.capitalize()} Nerve Stimulation")
 
-        if gen_gif:
-            # create an empty list called images
-            images = []
+                    fname = f"{cond_name}_{subject_id}.png"
+                    plt.tight_layout()
+                    plt.savefig(image_path+fname)
 
-            # get all the images in the 'images for gif' folder
-            filenames = sorted(glob.glob(f'{image_path}{cond_name}*.png'))
-            for filename in filenames:  # loop through all png files in the folder
-                im = Image.open(filename)  # open the image
+            if gen_gif:
+                # create an empty list called images
+                images = []
 
-                # create extra copies (to make the gif spend longer on the most recent data)
-                for x in range(0, 3):
-                    images.append(im)
+                # get all the images in the 'images for gif' folder
+                filenames = sorted(glob.glob(f'{image_path}{cond_name}*.png'))
+                for filename in filenames:  # loop through all png files in the folder
+                    im = Image.open(filename)  # open the image
 
-            # save as a gif
-            images[0].save(f'{image_path}{cond_name}.gif',
-                           save_all=True, append_images=images[1:], optimize=False, duration=500, loop=0)
+                    # create extra copies (to make the gif spend longer on the most recent data)
+                    for x in range(0, 3):
+                        images.append(im)
+
+                # save as a gif
+                images[0].save(f'{image_path}{cond_name}.gif',
+                               save_all=True, append_images=images[1:], optimize=False, duration=500, loop=0)
 
