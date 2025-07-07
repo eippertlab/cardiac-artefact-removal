@@ -53,8 +53,5 @@ and this file path should then be substituted for import_path_m within the follo
 These timings are generated using the method employed by [Nierula et al., 2024](https://www.biorxiv.org/content/10.1101/2022.12.05.519148v2) 
 and the accompanying code can be found in the [associated repository](https://github.com/eippertlab/spinal_sep1).
 
-### Archive ###
-Scripts contained in **/Archive** contain old code and alternative versions of scripts which are no longer in use.
-
 ## Required Software ##
 All scripts run with python 3.9 and MNE 1.0.3, for an extensive list of required packages see requirements.txt
