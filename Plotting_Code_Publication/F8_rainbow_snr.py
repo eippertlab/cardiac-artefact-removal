@@ -76,7 +76,7 @@ if __name__ == '__main__':
         #                  showfliers=True, whiskerprops={'linewidth': 2, "zorder": 10},
         #                  saturation=1, orient=ort)
         # ax = ax.set_ylim[(0, 25)]
-        plt.ylim([0, 35])
+        plt.ylim([0, 45])
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         plt.tight_layout()
