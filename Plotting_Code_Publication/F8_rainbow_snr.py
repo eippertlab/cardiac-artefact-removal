@@ -65,7 +65,7 @@ if __name__ == '__main__':
     for df in [df_med_long, df_tib_long]:
         cond_name = conditons[i]
         i += 1
-        f, ax = plt.subplots(figsize=(8, 12))
+        f, ax = plt.subplots(figsize=(8, 8))
         ax = pt.half_violinplot(x=dx, y=dy, data=df, palette=pal, bw=.2, cut=0.,
                                 scale="area", width=.6, inner=None, orient=ort,
                                 linewidth=0.0)
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         #                  showfliers=True, whiskerprops={'linewidth': 2, "zorder": 10},
         #                  saturation=1, orient=ort)
         # ax = ax.set_ylim[(0, 25)]
-        plt.ylim([0, 25])
+        plt.ylim([0, 35])
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         plt.tight_layout()

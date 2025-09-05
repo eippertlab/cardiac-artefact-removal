@@ -5,7 +5,6 @@ import os
 import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
-from mpl_axes_aligner import align
 import seaborn as sns
 import matplotlib as mpl
 mpl.rcParams['pdf.fonttype'] = 42
@@ -28,7 +27,7 @@ if __name__ == '__main__':
                  'S21', 'S25', 'L1', 'S29', 'S14', 'S33', 'S3', 'AL', 'L4', 'S6',
                  'S23']
 
-    image_path = "/data/p_02569/Images/GrandAverageHeartYY_Dataset1/"
+    image_path = "/data/p_02569/Images_ResidualArtefact/GrandAverageHeartYY_Dataset1/"
     os.makedirs(image_path, exist_ok=True)
 
     for cond_name in cond_names:  # Conditions (median, tibial)
@@ -119,29 +118,19 @@ if __name__ == '__main__':
         relevant_channel_dss = averaged_dss.pick_channels([channel])
 
         # Want 1 row, 3 column subplot
-        # Want left y-axis to relate to cleaned heart artefact
-        # Want right y-axis to relate to uncleaned heart artefact
         fig, [ax1, ax2, ax3, ax4, ax5] = plt.subplots(1, 5, figsize=[18, 6])
-        ax10 = ax1.twinx()
-        ax20 = ax2.twinx()
-        ax30 = ax3.twinx()
-        ax40 = ax4.twinx()
-        ax50 = ax5.twinx()
-        ax1.get_shared_y_axes().join(ax1, ax2, ax3, ax4, ax5)
-        ax10.get_shared_y_axes().join(ax10, ax20, ax30, ax40, ax50)
 
         # PCA
         ax1.plot(relevant_channel_pca.times, relevant_channel_pca.data[0, :]*10**6, label='PCA-OBS',
                  color=pal[1])
-        ax1.set_ylabel('Cleaned Artefact Amplitude (\u03BCV)')
+        ax1.set_ylabel('Artefact Amplitude (\u03BCV)')
         ax1.set_xlabel('Time (s)')
         if cond_name == 'median':
             ax1.set_title('PCA-OBS')
         # ax1.spines['left'].set_color('blue')
         # ax1.tick_params(axis='y', colors='blue')
-        ax10.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6, label='Uncleaned',
+        ax1.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :]*10**6, label='Uncleaned',
                   linewidth=0.5, linestyle='dashed', color='blue')  # pal[0]
-        ax10.set_yticklabels([])
 
         # ICA
         ax2.plot(relevant_channel_ica.times, relevant_channel_ica.data[0, :] * 10 ** 6, label='ICA',
@@ -149,12 +138,10 @@ if __name__ == '__main__':
         ax2.set_xlabel('Time (s)')
         if cond_name == 'median':
             ax2.set_title('ICA')
-        ax2.set_yticklabels([])
         # ax2.spines['left'].set_color('orange')
         # ax2.tick_params(axis='y', colors='orange')
-        ax20.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
+        ax2.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
                   linewidth=0.5, linestyle='dashed', color='blue')  # pal[0]
-        ax20.set_yticklabels([])
 
         # SSP5
         ax3.plot(relevant_channel_ssp5.times, relevant_channel_ssp5.data[0, :] * 10 ** 6, label='SSP',
@@ -162,11 +149,9 @@ if __name__ == '__main__':
         ax3.set_xlabel('Time (s)')
         if cond_name == 'median':
             ax3.set_title('SSP')
-        ax3.set_yticklabels([])
-        ax30.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
+        ax3.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
                   linewidth=0.5, linestyle='dashed', color='blue')  # pal[0]
         # ax30.spines['right'].set_color('blue')
-        ax30.set_yticklabels([])
 
         # CCA
         ax4.plot(relevant_channel_cca.times, relevant_channel_cca.data[0, :] * 10 ** 6, label='CCA-cardiac',
@@ -174,11 +159,9 @@ if __name__ == '__main__':
         ax4.set_xlabel('Time (s)')
         if cond_name == 'median':
             ax4.set_title('CCA-cardiac')
-        ax4.set_yticklabels([])
-        ax40.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
+        ax4.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
                   linewidth=0.5, linestyle='dashed', color='blue')  # pal[0]
         # ax30.spines['right'].set_color('blue')
-        ax40.set_yticklabels([])
 
         # DSS
         ax5.plot(relevant_channel_dss.times, relevant_channel_dss.data[0, :] * 10 ** 6, label='DSS-cardiac',
@@ -186,13 +169,8 @@ if __name__ == '__main__':
         ax5.set_xlabel('Time (s)')
         if cond_name == 'median':
             ax5.set_title('DSS-cardiac')
-        ax5.set_yticklabels([])
-        ax50.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
+        ax5.plot(relevant_channel_prep.times, relevant_channel_prep.data[0, :] * 10 ** 6, label='Uncleaned',
                   linewidth=0.5, linestyle='dashed', color='blue')  # pal[0]
-        ax50.set_ylabel('Uncleaned Artefact Amplitude (\u03BCV)')
-        # ax30.spines['right'].set_color('blue')
-        ax50.yaxis.label.set_color('blue')
-        ax50.tick_params(axis='y', colors='blue')
 
         ax1.set_xlim([-200 / 1000, 400 / 1000])
         ax2.set_xlim([-200 / 1000, 400 / 1000])
@@ -202,28 +180,6 @@ if __name__ == '__main__':
 
         fname = f"CardiacTimeCourse__{channel}.png"
 
-        # Align y-axes
-        if cond_name == 'median':
-            ax1.set_ylim([-1, 1.5])
-            ax2.set_ylim([-1, 1.5])
-            ax3.set_ylim([-1, 1.5])
-            ax4.set_ylim([-1, 1.5])
-            ax5.set_ylim([-1, 1.5])
-            align.yaxes(ax1, 0, ax10, 0, 0.75)
-        else:
-            ax1.set_ylim([-4, 7])
-            ax2.set_ylim([-4, 7])
-            ax3.set_ylim([-4, 7])
-            ax4.set_ylim([-4, 7])
-            ax5.set_ylim([-4, 7])
-            align.yaxes(ax1, 0, ax10, 0, 0.25)
-
-        # if cond_name == 'median':
-        #     plt.suptitle(f"Cardiac Artefact Time Courses\n"
-        #                  f"Cervical Spinal Cord")
-        # else:
-        #     plt.suptitle(f"Cardiac Artefact Time Courses\n"
-        #                  f"Lumbar Spinal Cord")
         plt.tight_layout()
         plt.savefig(image_path+fname)
         plt.savefig(image_path + fname + '.pdf', bbox_inches='tight', format="pdf")
