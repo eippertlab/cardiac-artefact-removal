@@ -1,4 +1,4 @@
-[![GitHub Release](https://img.shields.io/github/v/release/eippertlab/cardiac-artefact-removal)](https://github.com/eippertlab/cardiac-artefact-removal/releases/tag/v1.0)
+[![GitHub Release](https://img.shields.io/github/v/release/eippertlab/cardiac-artefact-removal)](https://github.com/eippertlab/cardiac-artefact-removal/releases/tag/v1.1)
 [![DOI](https://zenodo.org/badge/446424355.svg)](https://zenodo.org/doi/10.5281/zenodo.13693032)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
